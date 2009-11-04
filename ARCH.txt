@@ -1,0 +1,25 @@
+Master Server
+-have three separate daemons to handle requests (Client, Storage, Keep Alives using TCP and UDP)
+-for now, all data stored in memory (use temporary directory or user assigned directory in the future?)
+-map stor_id -> IP address
+-map string ("/home/a/adam") -> Directory Object
+-Directory Object stores: id (name or #) and name of files -> file object
+-File object stores: id (name or #?) and list of block objects
+-Block object has stor_id and file parent (?)
+-Init steps are: build backend -> handle initialization of stor servers while also handling client requests
+
+Storage Node
+-Init steps are: small init for backend -> hello to master -> handshakes to establish role -> handle client requests while KA/Notifications/communication to master
+-need to request leases from master
+-sends KeepAlive calls to master
+-partial metadata to be stored on these? (look at Ceph paper)
+
+Client
+-prelim api: read, write, append, seek, tell, mkdir, create, remove, rmdir
+-need to think of backend library implementation
+
+Communication
+-need to implement some form of RPC (or what have you)
+
+Out of place ideas:
+-treat some (all?) communication between server and master as KeepAlive (in addition to whatever the other requests were)

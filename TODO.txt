@@ -1,0 +1,7 @@
+-Come up with a name!!!!
+-Come up with package hierarchy
+-Create Main.java (or just use MasterServer.java)
+-ClientHandler class
+-KeepAliveHandler class (udp socket)
+-StorageHandler class
+-Setup global vars in MasterServer and accessors

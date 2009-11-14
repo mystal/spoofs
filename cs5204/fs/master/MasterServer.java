@@ -1,11 +1,13 @@
 package cs5204.fs.master;
 
+import java.net.InetAddress;
+
 import java.util.HashMap;
 
 public class MasterServer
 {
 	private static Directory rootDir;
-	private static HashMap<Integer, StorageServer> storMap;
+	private static HashMap<Integer, StorageNode> storMap;
 	
 	public static void main(String [] args)
 	{
@@ -17,5 +19,14 @@ public class MasterServer
 		
 		Thread clientHandler = new Thread(new ClientHandler());
 		Thread storageHandler = new Thread(new StorageHandler());
+	}
+	
+	private static class StorageNode
+	{
+		private InetAddress m_addr;
+		public StorageNode(InetAddress addr)
+		{
+			m_addr = addr;
+		}
 	}
 }

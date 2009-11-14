@@ -15,7 +15,7 @@ Storage Node
 -partial metadata to be stored on these? (look at Ceph paper)
 
 Client
--prelim api: read, write, append, seek, tell, mkdir, create, remove, rmdir
+-prelim api: open, read, write, append, seek, tell, mkdir, create, remove, rmdir
 -need to think of backend library implementation
 
 Communication

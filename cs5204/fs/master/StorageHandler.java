@@ -63,18 +63,18 @@ public class StorageHandler implements Runnable
 		}
 	}
 	
-	private class ServerHandlerTask implements Runnable
+	private class StorageHandlerTask implements Runnable
 	{
 		private int m_id;
 		private Socket m_clientSocket;
 		
-		public ServerHandlerTask(Socket socket, int id)
+		public StorageHandlerTask(Socket socket, int id)
 		{
 			m_id = id;
 			m_clientSocket = socket;
 		}
 		
-		public void go()
+		public void run()
 		{
 			BufferedReader in = new BufferedReader(new InputStream(m_clientSocket.getInputStream()));
 			PrintWriter out = new PrintWriter(m_clientSocket.getOutputStream());

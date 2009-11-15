@@ -19,16 +19,12 @@ public class Directory
 	
 	public File getFile(String name)
 	{
-		if (m_files.containsKey(name))
-			return m_files.get(name);
-		return null;
+        return m_files.get(name);
 	}
 	
 	public Directory getDirectory(String name)
 	{
-		if (m_directories.containsKey(name))
-			return m_directories.get(name);
-		return null;
+        return m_directories.get(name);
 	}
 	
 	//TODO: add[File|Directory], remove[File|Directory]

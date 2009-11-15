@@ -1,6 +1,7 @@
 General
 -Come up with a name!!!!
 -Come up with package hierarchy
+-Make a list of assumptions that we expect our filesystem to be used under
 
 Master
 -Create Main.java (or just use MasterServer.java)

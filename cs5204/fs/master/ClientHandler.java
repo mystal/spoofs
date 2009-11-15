@@ -74,7 +74,7 @@ public class ClientHandler implements Runnable
 			m_clientSocket = socket;
 		}
 		
-		public void go()
+		public void run()
 		{
 			BufferedReader in = new BufferedReader(new InputStream(m_clientSocket.getInputStream()));
 			PrintWriter out = new PrintWriter(m_clientSocket.getOutputStream());

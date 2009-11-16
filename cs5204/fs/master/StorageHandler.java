@@ -1,12 +1,15 @@
 package cs5204.fs.master;
 
+import cs5204.fs.rpc.MSRequest;
+import cs5204.fs.rpc.MSResponse;
+
 import java.net.Socket;
 import java.net.ServerSocket;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.BufferedReader;
-import java.io.PrintWriter;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -66,24 +69,53 @@ public class StorageHandler implements Runnable
 	private class StorageHandlerTask implements Runnable
 	{
 		private int m_id;
-		private Socket m_clientSocket;
+		private Socket m_storageSocket;
 		
 		public StorageHandlerTask(Socket socket, int id)
 		{
 			m_id = id;
-			m_clientSocket = socket;
+			m_storageSocket = socket;
 		}
 		
 		public void run()
 		{
-			BufferedReader in = new BufferedReader(new InputStream(m_clientSocket.getInputStream()));
-			PrintWriter out = new PrintWriter(m_clientSocket.getOutputStream());
+			ObjectInputStream ois = null;
+			ObjectOutputStream oos = null;
+			MSRequest req = null;
+			MSResponse resp = null;
 			
+			try {
+				ois = new ObjectInputStream(m_storageSocket.getInputStream());
+				req = (MSRequest)ois.readObject();
+				ois.close();
+			}
+			catch (IOException ex) {
+				//TODO: Log/fail
+			}
+			catch (ClassNotFoundException ex) {
+				//TODO: Log/fail
+			}
+			
+			resp = processRequest(req);
+				
+			try {
+				oos = new ObjectOutputStream(m_storageSocket.getOutputStream());
+				oos.writeObject(resp);
+				oos.close();
+			}
+			catch (IOException ex) {
+				//TODO: log/fail
+			}
+			}
+			
+			
+			m_storageSocket.close();
+		}
+		
+		private MSResponse processRequest(MSRequest req)
+		{
 			//TODO: process
-			
-			out.close();
-			in.close();
-			m_clientSocket.close();
+			return null;
 		}
 	}
 }

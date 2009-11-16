@@ -10,6 +10,8 @@ import java.net.ServerSocket;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -85,7 +87,7 @@ public class ClientHandler implements Runnable
 			CMResponse resp = null;
 			
 			try {
-				ois = new ObjectInputStream(m_client.getInputStream());
+				ois = new ObjectInputStream(m_clientSocket.getInputStream());
 				req = (CMRequest)ois.readObject();
 				ois.close();
 			}
@@ -99,7 +101,7 @@ public class ClientHandler implements Runnable
 			resp = processRequest(req);
 				
 			try {
-				oos = new ObjectOutputStream(m_client.getOutputStream());
+				oos = new ObjectOutputStream(m_clientSocket.getOutputStream());
 				oos.writeObject(resp);
 				oos.close();
 			}

@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.IOException;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -23,7 +24,6 @@ public class ClientHandler implements Runnable
 	private final int CORE_POOL_SIZE = 10;
 	private final int MAX_POOL_SIZE = 100;
 	private final long KEEP_ALIVE_TIME = 100;
-	private final int DEFAULT_PORT = 2009;
 
 	private int m_port;
 	private ServerSocket m_serverSocket;
@@ -38,10 +38,10 @@ public class ClientHandler implements Runnable
 		m_port = port;
 	}
 	
-	public void go()
+	public void run()
 	{
 		try {
-			m_serverSocket = new ServerSocket(port);
+			m_serverSocket = new ServerSocket(m_port);
 			//TODO: Decide on timeout and reuse
 		}
 		catch (IOException ex) {
@@ -109,7 +109,12 @@ public class ClientHandler implements Runnable
 				//TODO: log/fail
 			}
 			
-			m_clientSocket.close();
+			try {
+				m_clientSocket.close();
+			}
+			catch (IOException ex) {
+				//TODO: Log/fail
+			}
 		}
 		
 		private CMResponse processRequest(CMRequest req)
@@ -146,7 +151,7 @@ public class ClientHandler implements Runnable
 					//TODO
 					break;
 				case NO_OP:
-				case default:
+				default:
 					//TODO: Log no operation
 			}
 			

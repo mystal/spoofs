@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.IOException;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,7 +22,6 @@ public class StorageHandler implements Runnable
 	private final int CORE_POOL_SIZE = 10;
 	private final int MAX_POOL_SIZE = 100;
 	private final long KEEP_ALIVE_TIME = 100;
-	private final int DEFAULT_PORT = 2010;
 
 	private int m_port;
 	private ServerSocket m_serverSocket;
@@ -36,16 +36,20 @@ public class StorageHandler implements Runnable
 		m_port = port;
 	}
 	
-	public void go()
+	public void run()
 	{
+		System.out.println("Attempting to start StorageHandler on port " + m_port + "...");
 		try {
-			m_serverSocket = new ServerSocket(port);
+			m_serverSocket = new ServerSocket(m_port);
 			//TODO: Decide on timeout and reuse
 		}
 		catch (IOException ex) {
 			//TODO: Log
 			return;
 		}	
+		
+		System.out.println("StorageHandler successfully started!");
+		
 		int counter = 0;
 		while (true)
 		{
@@ -61,7 +65,7 @@ public class StorageHandler implements Runnable
 			if (sock != null)
 			{
 				//TODO: Log an accepted connection
-				m_exec.submit(new ClientHandlerTask(sock, counter++));
+				m_exec.submit(new StorageHandlerTask(sock, counter++));
 			}
 		}
 	}
@@ -106,10 +110,13 @@ public class StorageHandler implements Runnable
 			catch (IOException ex) {
 				//TODO: log/fail
 			}
+			
+			try {
+				m_storageSocket.close();
 			}
-			
-			
-			m_storageSocket.close();
+			catch (IOException ex) {
+				//TODO: Log/fail
+			}
 		}
 		
 		private MSResponse processRequest(MSRequest req)

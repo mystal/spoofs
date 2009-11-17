@@ -1,26 +1,30 @@
 package cs5204.fs.rpc;
 
+import cs5204.fs.common.FileOperation;
+
+import java.io.Serializable;
+
 /**
  * Represents a Client-Master Request from client to master.
  */
 public class CMRequest implements Serializable
 {
 	private String m_filename;
-	private FileOperations m_operation;
+	private FileOperation m_operation;
 	private int m_offset;
 	private int m_size;
 	
 	public CMRequest()
 	{
-		this(FileOpeartions.NO_OP, "", 0, 0);
+		this(FileOperation.NO_OP, "", 0, 0);
 	}
 	
-	public CMRequest(FileOperations operation, String filename)
+	public CMRequest(FileOperation operation, String filename)
 	{
 		this(operation, filename, 0, 0);
 	}
 	
-	public CMRequest(FileOperations operation, String filename, int offset, int size)
+	public CMRequest(FileOperation operation, String filename, int offset, int size)
 	{
 		m_operation = operation;
 		m_filename = filename;
@@ -28,12 +32,12 @@ public class CMRequest implements Serializable
 		m_size = size;
 	}
 	
-	public FileOperations getOperation()
+	public FileOperation getFileOperation()
 	{
 		return m_operation;
 	}
 	
-	public void setOperation(FileOperations operation)
+	public void setFileOperation(FileOperation operation)
 	{
 		m_operation = operation;
 	}
@@ -58,7 +62,7 @@ public class CMRequest implements Serializable
 		m_offset = off;
 	}
 	
-	public void getSize()
+	public int getSize()
 	{
 		return m_size;
 	}

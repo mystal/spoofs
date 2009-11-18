@@ -12,7 +12,7 @@ public class MSRequest implements Serializable
 		m_port = port;
 	}
 
-	public String getIpAddr()
+	public String getIPAddr()
 	{
 		return m_ipAddr;
 	}

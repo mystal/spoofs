@@ -1,8 +1,9 @@
 package cs5204.fs.master;
 
+import cs5204.fs.common.StatusCode;
+import cs5204.fs.lib.AbstractHandler;
 import cs5204.fs.rpc.MSRequest;
 import cs5204.fs.rpc.MSResponse;
-import cs5204.fs.common.StatusCode;
 
 import java.net.Socket;
 import java.net.ServerSocket;
@@ -18,68 +19,23 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class StorageHandler implements Runnable
+public class StorageHandler extends AbstractHandler
 {
-	private final int CORE_POOL_SIZE = 10;
-	private final int MAX_POOL_SIZE = 100;
-	private final long KEEP_ALIVE_TIME = 100;
-
-	private int m_port;
-	private ServerSocket m_serverSocket;
-	private ExecutorService m_exec;
-	
 	public StorageHandler(int port)
 	{
-		m_exec = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
-					KEEP_ALIVE_TIME, TimeUnit.SECONDS, 
-					new LinkedBlockingQueue<Runnable>(CORE_POOL_SIZE));
-		
-		m_port = port;
+        super(port);
 	}
 	
-	public void run()
+    protected AbstractHandlerTask createHandlerTask(Socket socket, int id)
+    {
+        return new StorageHandlerTask(socket, id);
+    }
+
+	private class StorageHandlerTask extends AbstractHandlerTask
 	{
-		System.out.println("Attempting to start StorageHandler on port " + m_port + "...");
-		try {
-			m_serverSocket = new ServerSocket(m_port);
-			//TODO: Decide on timeout and reuse
-		}
-		catch (IOException ex) {
-			//TODO: Log
-			return;
-		}	
-		
-		System.out.println("StorageHandler successfully started!");
-		
-		int counter = 0;
-		while (true)
-		{
-			Socket sock = null;
-			try {
-				sock = m_serverSocket.accept();
-				//TODO: set timeout
-			}
-			catch (IOException ex) {
-				//TODO: Log
-			}
-			
-			if (sock != null)
-			{
-				//TODO: Log an accepted connection
-				m_exec.submit(new StorageHandlerTask(sock, counter++));
-			}
-		}
-	}
-	
-	private class StorageHandlerTask implements Runnable
-	{
-		private int m_id;
-		private Socket m_storageSocket;
-		
 		public StorageHandlerTask(Socket socket, int id)
 		{
-			m_id = id;
-			m_storageSocket = socket;
+            super(socket, id);
 		}
 		
 		public void run()
@@ -90,7 +46,7 @@ public class StorageHandler implements Runnable
 			MSResponse resp = null;
 			
 			try {
-				ois = new ObjectInputStream(m_storageSocket.getInputStream());
+				ois = new ObjectInputStream(m_mySocket.getInputStream());
 				req = (MSRequest)ois.readObject();
 				ois.close();
 			}
@@ -104,7 +60,7 @@ public class StorageHandler implements Runnable
 			resp = processRequest(req);
 				
 			try {
-				oos = new ObjectOutputStream(m_storageSocket.getOutputStream());
+				oos = new ObjectOutputStream(m_mySocket.getOutputStream());
 				oos.writeObject(resp);
 				oos.close();
 			}
@@ -113,7 +69,7 @@ public class StorageHandler implements Runnable
 			}
 			
 			try {
-				m_storageSocket.close();
+				m_mySocket.close();
 			}
 			catch (IOException ex) {
 				//TODO: Log/fail
@@ -123,16 +79,16 @@ public class StorageHandler implements Runnable
 		private MSResponse processRequest(MSRequest req)
 		{
 			MSResponse resp = null;
-			StatusCode status = DENIED;
+			StatusCode status = StatusCode.DENIED;
 			int id = -1;
 			
-			String addr = resp.getIpAddr();
-			int port = resp.getPort();
+			String addr = req.getIPAddr();
+			int port = req.getPort();
 			
-			if (MasterServer.addStorageNode(resp.getIpAddr(), resp.getPort()))
+            id = MasterServer.addStorageNode(addr, port);
+			if (id != -1)
 			{
-				status = OK;
-				id = MasterServer.lookupStorageNode(resp.getIpAddr(), resp.getPort());
+				status = StatusCode.OK;
 			}
 			
 			resp = new MSResponse(status, id);

@@ -11,6 +11,8 @@ public class MasterServer
 	private static final int DEFAULT_STORAGE_PORT = 2009;
 	private static final int DEFAULT_CLIENT_PORT = 2010;
 
+    private static int storIdCount = 0;
+
 	private static Directory _rootDir;
 	private static HashMap<Integer, StorageNode> _storMap;
 	private static ReentrantLock _storMapLock;
@@ -30,15 +32,24 @@ public class MasterServer
 		
 		storageHandler.start();
 	}
-	
-	private static class StorageNode
-	{
-		private InetAddress m_addr;
-		public StorageNode(InetAddress addr)
-		{
-			m_addr = addr;
-		}
-	}
 
     //TODO: addStorageNode(), write a file, read a file, other public methods
+
+    public static int addStorageNode(String ipAddr, int port)
+    {
+        _storMap.put(storIdCount, new StorageNode(ipAddr, port));
+        return storIdCount++;
+    }
+
+	private static class StorageNode
+	{
+		private String m_addr;
+		private int m_port;
+
+		public StorageNode(String addr, int port)
+		{
+			m_addr = addr;
+            m_port = port;
+		}
+	}
 }

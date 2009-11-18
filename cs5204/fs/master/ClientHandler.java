@@ -107,7 +107,7 @@ public class ClientHandler implements Runnable
 				
 			try {
 				oos = new ObjectOutputStream(m_clientSocket.getOutputStream());
-				comm = new Communication(Protocol.CM_RESPONSE, resp);
+				comm = new Communication(Protocol.CM_HANDSHAKE_RESPONSE, resp);
 				oos.writeObject(comm);
 				oos.close();
 			}

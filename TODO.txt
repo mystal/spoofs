@@ -1,13 +1,9 @@
 General
--Come up with a name!!!!
--Come up with package hierarchy
+-Possible name: spoofs
 -Make a list of assumptions that we expect our filesystem to be used under
 
 Master
--Create Main.java (or just use MasterServer.java)
 -ClientHandler class
 -KeepAliveHandler class (udp socket)
 -StorageHandler class
--Setup global vars in MasterServer and accessors
--main method will call MasterServer code that sets up and waits on daemon threads
 -set up a shutdown handler to elegantly clean up when kill signal sent

@@ -17,13 +17,16 @@ import java.net.UnknownHostException;
 
 public class StorageServer
 {
+	private static final int DEFAULT_PORT = 2059;
+	private static final int MAX_ATTEMPTS = 10;
+	
 	private static SocketAddress _masterAddr;
 	private static Socket _socket;
 	private static int _id;
 	private static String _ipAddr;
-	private static final int DEFAULT_PORT = 2059;
-	private static final int MAX_ATTEMPTS = 10;
-	
+    private static InputStream _is;
+    private static OutputStream _os;
+
 	public static void main(String [] args)
 	{
 		if (args.length < 2)
@@ -79,18 +82,19 @@ public class StorageServer
 		req = new MSRequest(_ipAddr, DEFAULT_PORT);
 		
 		try {
-			oos = new ObjectOutputStream(_socket.getOutputStream());
+			oos = new ObjectOutputStream(_os);
 			oos.writeObject(req);
-			oos.close();			
+			//oos.close();
+            oos.flush();
 		}
 		catch (IOException ex) {
 			//TODO: Log/fail
 		}
 		
 		try {
-			ois = new ObjectInputStream(_socket.getInputStream());
+			ois = new ObjectInputStream(_is);
 			resp = (MSResponse)ois.readObject();
-			ois.close();
+			//ois.close();
 		}
 		catch (IOException ex) {
 			//TODO: log/fail
@@ -111,6 +115,14 @@ public class StorageServer
 				break;
 		}
 		
+        try {
+            oos.close();
+            ois.close();
+        }
+		catch (IOException ex) {
+			//TODO: Log/fail
+		}
+
 		return success;
 	}
 	
@@ -118,5 +130,8 @@ public class StorageServer
 	{
 		_socket = new Socket();
 		_socket.connect(_masterAddr);
+
+        _is = _socket.getInputStream();
+        _os = _socket.getOutputStream();
 	}
 }

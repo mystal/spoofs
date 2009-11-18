@@ -45,10 +45,10 @@ public class StorageHandler extends AbstractHandler
 			MSRequest req = null;
 			MSResponse resp = null;
 			
+
 			try {
 				ois = new ObjectInputStream(m_mySocket.getInputStream());
 				req = (MSRequest)ois.readObject();
-				ois.close();
 			}
 			catch (IOException ex) {
 				//TODO: Log/fail
@@ -62,13 +62,15 @@ public class StorageHandler extends AbstractHandler
 			try {
 				oos = new ObjectOutputStream(m_mySocket.getOutputStream());
 				oos.writeObject(resp);
-				oos.close();
+				oos.flush();
 			}
 			catch (IOException ex) {
 				//TODO: log/fail
 			}
 			
 			try {
+                oos.close();
+                ois.close();
 				m_mySocket.close();
 			}
 			catch (IOException ex) {

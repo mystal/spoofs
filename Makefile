@@ -7,7 +7,7 @@ masterserver = ${srcdir}/master/MasterServer.java
 storageserver = ${srcdir}/storage/StorageServer.java
 
 classes:
-	mkdir classes
+	mkdir ${out}
 
 master: ${out} ${masterserver}
 	javac -d ${out} ${masterserver}

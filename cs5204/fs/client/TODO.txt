@@ -1,0 +1,3 @@
+-have file handles that are passed into functions
+-implement functions in common/FileOperation.java
+-functions in a Filesystem static class?

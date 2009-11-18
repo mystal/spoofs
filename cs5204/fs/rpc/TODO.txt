@@ -1,0 +1,2 @@
+-change the request and response classes to have an enum that says what type they are
+-also have an object that is the payload, which is casted to the proper type

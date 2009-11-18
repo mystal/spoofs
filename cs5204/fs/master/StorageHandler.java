@@ -2,6 +2,7 @@ package cs5204.fs.master;
 
 import cs5204.fs.rpc.MSRequest;
 import cs5204.fs.rpc.MSResponse;
+import cs5204.fs.common.StatusCode;
 
 import java.net.Socket;
 import java.net.ServerSocket;
@@ -121,8 +122,22 @@ public class StorageHandler implements Runnable
 		
 		private MSResponse processRequest(MSRequest req)
 		{
-			//TODO: process
-			return null;
+			MSResponse resp = null;
+			StatusCode status = DENIED;
+			int id = -1;
+			
+			String addr = resp.getIpAddr();
+			int port = resp.getPort();
+			
+			if (MasterServer.addStorageNode(resp.getIpAddr(), resp.getPort()))
+			{
+				status = OK;
+				id = MasterServer.lookupStorageNode(resp.getIpAddr(), resp.getPort());
+			}
+			
+			resp = new MSResponse(status, id);
+			
+			return resp;
 		}
 	}
 }

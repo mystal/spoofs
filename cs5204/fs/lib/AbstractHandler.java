@@ -61,7 +61,7 @@ public abstract class AbstractHandler implements Runnable
 		}
 	}
 	
-    protected abstract AbstractHandlerTask createHandlerTask(Socket, int);
+    protected abstract AbstractHandlerTask createHandlerTask(Socket socket, int id);
 
     protected abstract class AbstractHandlerTask implements Runnable
     {
@@ -74,7 +74,7 @@ public abstract class AbstractHandler implements Runnable
 			m_mySocket = socket;
         }
 
-        protected abstract void run();
+        public abstract void run();
     }
 }
 

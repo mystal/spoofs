@@ -4,14 +4,16 @@ import cs5204.fs.rpc.MSRequest;
 import cs5204.fs.rpc.MSResponse;
 
 import java.io.InputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import java.net.InetAddress;
-import java.net.SocketAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.UnknownHostException;
 
 public class StorageServer
 {
@@ -32,11 +34,16 @@ public class StorageServer
 		
 		//First initiate the contact with the master
 		String addr = args[0];
-		int port = args[1];
+		int port = Integer.parseInt(args[1]);
 		
 		_masterAddr = new InetSocketAddress(addr, port);
 		_socket = new Socket();
-		_ipAddr = InetAddress.getLocalHost().getHostAddress();
+        try {
+		    _ipAddr = InetAddress.getLocalHost().getHostAddress();
+        }
+        catch (UnknownHostException ex) {
+            //TODO: Log/fail
+        }
 		
 		int attempts = 0;
 		while (!initiateContact())
@@ -45,6 +52,7 @@ public class StorageServer
 			if(++attempts > MAX_ATTEMPTS)
 			{
 				//TODO: Log max rety reached
+                return;
 			}
 		}
 		
@@ -61,7 +69,12 @@ public class StorageServer
 		MSResponse resp = null;
 		boolean success = false;
 		
-		establishSocketConnection();
+        try {
+            establishSocketConnection();
+        }
+        catch (IOException ex) {
+            //TODO: Log/fail
+        }
 		
 		req = new MSRequest(_ipAddr, DEFAULT_PORT);
 		
@@ -89,7 +102,7 @@ public class StorageServer
 		switch (resp.getStatus())
 		{
 			case OK:
-				m_id = resp.getId();
+				_id = resp.getId();
 				success = true;
 				break;
 			case DENIED:
@@ -101,7 +114,7 @@ public class StorageServer
 		return success;
 	}
 	
-	public static void establishSocketConnection()
+	public static void establishSocketConnection() throws IOException
 	{
 		_socket = new Socket();
 		_socket.connect(_masterAddr);

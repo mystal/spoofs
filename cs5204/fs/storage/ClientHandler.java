@@ -1,11 +1,20 @@
 package cs5204.fs.storage;
 
+import cs5204.fs.lib.AbstractHandler;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
+import java.net.Socket;
+import java.net.ServerSocket;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class ClientHandler implements Runnable
+public class ClientHandler extends AbstractHandler
 {
 	private final int CORE_POOL_SIZE = 10;
 	private final int MAX_POOL_SIZE = 100;
@@ -27,7 +36,7 @@ public class ClientHandler implements Runnable
 	public void run()
 	{
 		try {
-			m_serverSocket = new ServerSocket(port);
+			m_serverSocket = new ServerSocket(m_port);
 			//TODO: Decide on timeout and reuse
 		}
 		catch (IOException ex) {

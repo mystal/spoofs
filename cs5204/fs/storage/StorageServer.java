@@ -53,7 +53,7 @@ public class StorageServer
 		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_PORT));
 	}
 	
-	public static bool initiateContact()
+	public static boolean initiateContact()
 	{
 		ObjectInputStream ois = null;
 		ObjectOutputStream oos = null;

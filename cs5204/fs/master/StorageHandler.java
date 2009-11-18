@@ -2,8 +2,11 @@ package cs5204.fs.master;
 
 import cs5204.fs.common.StatusCode;
 import cs5204.fs.lib.AbstractHandler;
+import cs5204.fs.rpc.Communication;
+import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MSRequest;
 import cs5204.fs.rpc.MSResponse;
+import cs5204.fs.common.Protocol;
 
 import java.net.Socket;
 import java.net.ServerSocket;
@@ -42,13 +45,15 @@ public class StorageHandler extends AbstractHandler
 		{
 			ObjectInputStream ois = null;
 			ObjectOutputStream oos = null;
+			Communication comm = null;
 			MSRequest req = null;
 			MSResponse resp = null;
 			
 
 			try {
 				ois = new ObjectInputStream(m_mySocket.getInputStream());
-				req = (MSRequest)ois.readObject();
+				comm = (Communication)ois.readObject();
+				req = (MSRequest)comm.getPayload();
 			}
 			catch (IOException ex) {
 				//TODO: Log/fail
@@ -61,7 +66,8 @@ public class StorageHandler extends AbstractHandler
 				
 			try {
 				oos = new ObjectOutputStream(m_mySocket.getOutputStream());
-				oos.writeObject(resp);
+				comm = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, resp);
+				oos.writeObject(comm);
 				oos.flush();
 			}
 			catch (IOException ex) {

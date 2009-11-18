@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * Represents a Client-Master Request from client to master.
  */
-public class CMRequest implements Serializable
+public class CMRequest implements Payload
 {
 	private String m_filename;
 	private FileOperation m_operation;

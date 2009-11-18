@@ -1,9 +1,12 @@
 package cs5204.fs.master;
 
+import cs5204.fs.rpc.Communication;
+import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.CMRequest;
 import cs5204.fs.rpc.CMResponse;
 import cs5204.fs.common.FileOperation;
 import cs5204.fs.common.StatusCode;
+import cs5204.fs.common.Protocol;
 
 import java.net.Socket;
 import java.net.ServerSocket;
@@ -83,12 +86,14 @@ public class ClientHandler implements Runnable
 		{
 			ObjectInputStream ois = null;
 			ObjectOutputStream oos = null;
+			Communication comm = null;
 			CMRequest req = null;
 			CMResponse resp = null;
 			
 			try {
 				ois = new ObjectInputStream(m_clientSocket.getInputStream());
-				req = (CMRequest)ois.readObject();
+				comm = (Communication)ois.readObject();
+				req = (CMRequest)comm.getPayload();
 				ois.close();
 			}
 			catch (IOException ex) {
@@ -102,7 +107,8 @@ public class ClientHandler implements Runnable
 				
 			try {
 				oos = new ObjectOutputStream(m_clientSocket.getOutputStream());
-				oos.writeObject(resp);
+				comm = new Communication(Protocol.CM_RESPONSE, resp);
+				oos.writeObject(comm);
 				oos.close();
 			}
 			catch (IOException ex) {

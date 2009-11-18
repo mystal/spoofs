@@ -2,7 +2,7 @@ package cs5204.fs.rpc;
 
 import java.io.Serializable;
 
-public class MSRequest implements Serializable
+public class MSRequest implements Payload
 {
 	private String m_ipAddr;
 	private int m_port;

@@ -4,7 +4,7 @@ import cs5204.fs.common.StatusCode;
 
 import java.io.Serializable;
 
-public class MSResponse implements Serializable
+public class MSResponse implements Payload
 {
 	private StatusCode m_status;
 	private int m_id;

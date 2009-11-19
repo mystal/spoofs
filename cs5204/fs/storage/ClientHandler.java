@@ -1,18 +1,9 @@
 package cs5204.fs.storage;
 
 import cs5204.fs.lib.AbstractHandler;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import cs5204.fs.rpc.Communication;
 
 import java.net.Socket;
-import java.net.ServerSocket;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class ClientHandler extends AbstractHandler
 {
@@ -33,10 +24,13 @@ public class ClientHandler extends AbstractHandler
             super(socket, id);
 		}
 		
-		public void run()
+		protected Communication processRequest(Communication req)
 		{
-			ObjectInputStream ois = null;
-			ObjectOutputStream oos = null;
+			Communication resp = null;
+			
+			//TODO: Implement
+			
+			return resp;
 		}
 	}
 }

@@ -1,5 +1,7 @@
 package cs5204.fs.lib;
 
+import cs5204.fs.rpc.Communication;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -74,7 +76,47 @@ public abstract class AbstractHandler implements Runnable
 			m_mySocket = socket;
         }
 
-        public abstract void run();
+        public void run()
+		{
+			ObjectInputStream ois = null;
+			ObjectOutputStream oos = null;
+			Communication req = null;
+			Communication resp = null;
+			
+			try {
+				ois = new ObjectInputStream(m_mySocket.getInputStream());
+				req = (Communication)ois.readObject();
+				ois.close();
+			}
+			catch (IOException ex) {
+				//TODO: Log/fail
+			}
+			catch (ClassNotFoundException ex) {
+				//TODO: Log/fail
+			}
+			
+			resp = processRequest(req);
+				
+			try {
+				oos = new ObjectOutputStream(m_mySocket.getOutputStream());
+				oos.writeObject(resp);
+				oos.flush();
+			}
+			catch (IOException ex) {
+				//TODO: log/fail
+			}
+			
+			try {
+				ois.close();
+				oos.close();
+				m_mySocket.close();
+			}
+			catch (IOException ex) {
+				//TODO: Log/fail
+			}
+		}
+		
+		protected abstract Communication processRequest(Communication req);
     }
 }
 

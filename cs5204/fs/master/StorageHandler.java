@@ -4,8 +4,8 @@ import cs5204.fs.common.StatusCode;
 import cs5204.fs.lib.AbstractHandler;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
-import cs5204.fs.rpc.MSRequest;
-import cs5204.fs.rpc.MSResponse;
+import cs5204.fs.rpc.MSHandshakeRequest;
+import cs5204.fs.rpc.MSHandshakeResponse;
 import cs5204.fs.common.Protocol;
 
 import java.net.Socket;
@@ -41,65 +41,32 @@ public class StorageHandler extends AbstractHandler
             super(socket, id);
 		}
 		
-		public void run()
+		protected Communication processRequest(Communication req)
 		{
-			ObjectInputStream ois = null;
-			ObjectOutputStream oos = null;
-			Communication comm = null;
-			MSRequest req = null;
-			MSResponse resp = null;
+			Communication resp = null;
 			
-
-			try {
-				ois = new ObjectInputStream(m_mySocket.getInputStream());
-				comm = (Communication)ois.readObject();
-				req = (MSRequest)comm.getPayload();
-			}
-			catch (IOException ex) {
-				//TODO: Log/fail
-			}
-			catch (ClassNotFoundException ex) {
-				//TODO: Log/fail
-			}
-			
-			resp = processRequest(req);
-				
-			try {
-				oos = new ObjectOutputStream(m_mySocket.getOutputStream());
-				comm = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, resp);
-				oos.writeObject(comm);
-				oos.flush();
-			}
-			catch (IOException ex) {
-				//TODO: log/fail
-			}
-			
-			try {
-                oos.close();
-                ois.close();
-				m_mySocket.close();
-			}
-			catch (IOException ex) {
-				//TODO: Log/fail
-			}
-		}
-		
-		private MSResponse processRequest(MSRequest req)
-		{
-			MSResponse resp = null;
-			StatusCode status = StatusCode.DENIED;
-			int id = -1;
-			
-			String addr = req.getIPAddr();
-			int port = req.getPort();
-			
-            id = MasterServer.addStorageNode(addr, port);
-			if (id != -1)
+			switch (req.getProtocol())
 			{
-				status = StatusCode.OK;
+				case MS_HANDSHAKE_REQUEST:
+				{
+					MSHandshakeRequest msReq = (MSHandshakeRequest)req.getPayload();
+					StatusCode status = StatusCode.DENIED;
+					int id = -1;
+					String addr = msReq.getIPAddr();
+					int port = msReq.getPort();
+					
+					if ((id = MasterServer.addStorageNode(addr, port)) != -1)
+						status = StatusCode.OK;
+					
+					resp = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, new MSHandshakeResponse(status, id));
+				} break;
+				case MS_COMMIT_REQUEST:
+				{
+					//TODO: Handle this
+				} break;
+				default:
+					break;
 			}
-			
-			resp = new MSResponse(status, id);
 			
 			return resp;
 		}

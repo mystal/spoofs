@@ -7,24 +7,24 @@ import java.io.Serializable;
 /**
  * Represents a Client-Master Request from client to master.
  */
-public class CMRequest implements Payload
+public class CMOperationRequest implements Payload
 {
 	private String m_filename;
 	private FileOperation m_operation;
 	private int m_offset;
 	private int m_size;
 	
-	public CMRequest()
+	public CMOperationRequest()
 	{
 		this(FileOperation.NO_OP, "", 0, 0);
 	}
 	
-	public CMRequest(FileOperation operation, String filename)
+	public CMOperationRequest(FileOperation operation, String filename)
 	{
 		this(operation, filename, 0, 0);
 	}
 	
-	public CMRequest(FileOperation operation, String filename, int offset, int size)
+	public CMOperationRequest(FileOperation operation, String filename, int offset, int size)
 	{
 		m_operation = operation;
 		m_filename = filename;

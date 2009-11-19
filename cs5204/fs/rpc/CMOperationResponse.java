@@ -4,11 +4,12 @@ import cs5204.fs.common.StatusCode;
 
 import java.io.Serializable;
 
-public class CMResponse implements Payload
+public class CMOperationResponse implements Payload
 {
 	private StatusCode m_status;
+	//TODO: Location of blocks
 	
-	public CMResponse(StatusCode status)
+	public CMOperationResponse(StatusCode status)
 	{
 		m_status = status;
 	}

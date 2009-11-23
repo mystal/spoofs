@@ -2,6 +2,8 @@ package cs5204.fs.storage;
 
 import cs5204.fs.lib.AbstractHandler;
 import cs5204.fs.rpc.Communication;
+import cs5204.fs.rpc.CSOperationRequest;
+import cs5204.fs.rpc.CSOperationResponse;
 
 import java.net.Socket;
 

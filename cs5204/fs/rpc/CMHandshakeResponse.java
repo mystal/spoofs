@@ -8,11 +8,13 @@ public class CMHandshakeResponse implements Payload
 {
 	private StatusCode m_status;
 	private int m_id;
+	private int m_blockSize;
 	
-	public CMHandshakeResponse(StatusCode status, int id)
+	public CMHandshakeResponse(StatusCode status, int id, int blockSize)
 	{
 		m_status = status;
 		m_id = id;
+		m_blockSize = blockSize;
 	}
 	
 	public StatusCode getStatus()
@@ -23,6 +25,11 @@ public class CMHandshakeResponse implements Payload
 	public int getId()
 	{
 		return m_id;
+	}
+	
+	public int getBlockSize()
+	{
+		return m_blockSize;
 	}
 }
 

@@ -2,8 +2,8 @@ package cs5204.fs.storage;
 
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
-import cs5204.fs.rpc.MSRequest;
-import cs5204.fs.rpc.MSResponse;
+import cs5204.fs.rpc.MSHandshakeRequest;
+import cs5204.fs.rpc.MSHandshakeResponse;
 import cs5204.fs.common.Protocol;
 
 import java.io.InputStream;
@@ -72,8 +72,8 @@ public class StorageServer
 		ObjectInputStream ois = null;
 		ObjectOutputStream oos = null;
 		Communication comm = null;
-		MSRequest req = null;
-		MSResponse resp = null;
+		MSHandshakeRequest req = null;
+		MSHandshakeResponse resp = null;
 		boolean success = false;
 		
         try {
@@ -83,13 +83,12 @@ public class StorageServer
             //TODO: Log/fail
         }
 		
-		req = new MSRequest(_ipAddr, DEFAULT_PORT);
+		req = new MSHandshakeRequest(_ipAddr, DEFAULT_PORT);
 		
 		try {
 			oos = new ObjectOutputStream(_os);
 			comm = new Communication(Protocol.MS_HANDSHAKE_REQUEST, req);
 			oos.writeObject(comm);
-			//oos.close();
             oos.flush();
 		}
 		catch (IOException ex) {
@@ -99,8 +98,7 @@ public class StorageServer
 		try {
 			ois = new ObjectInputStream(_is);
 			comm = (Communication)ois.readObject();
-			resp = (MSResponse)comm.getPayload();
-			//ois.close();
+			resp = (MSHandshakeResponse)comm.getPayload();
 		}
 		catch (IOException ex) {
 			//TODO: log/fail

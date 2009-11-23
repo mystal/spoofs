@@ -48,12 +48,16 @@ public class ClientHandler extends AbstractHandler
 				case CM_HANDSHAKE_REQUEST:
 				{
 					CMHandshakeRequest cmReq = (CMHandshakeRequest)req.getPayload();
-					//TODO: Add client
+					int id = MasterServer.addStorageNode(cmReq.getIPAddr(), cmReq.getPort());
+					resp = new Communication(Protocol.CM_HANDSHAKE_RESPONSE, new CMHandshakeResponse(StatusCode.OK, id, MasterServer.BLOCK_SIZE));					
 				} break;
 				
 				case CM_OPERATION_REQUEST:
 				{
 					CMOperationRequest cmReq = (CMOperationRequest)req.getPayload();
+					StatusCode status = StatusCode.DENIED;
+					String [] addrs = null;
+					int [] ports = null;
 					/**
 					 *	Use the master server to handle all the different operations.
 					 *  Only use master server as needed, as synchronization will be
@@ -65,7 +69,10 @@ public class ClientHandler extends AbstractHandler
 							//TODO
 							break;
 						case MKDIR:
-							//TODO
+							if(MasterServer.makeDirectory(cmReq.getFilename()))
+							{
+								status = StatusCode.OK;
+							}
 							break;
 						case OPEN:
 							//TODO
@@ -86,8 +93,12 @@ public class ClientHandler extends AbstractHandler
 						case NO_OP:
 						default:
 							//TODO: Log no operation
-					} break;
-				}
+							break;
+					}
+					
+					resp = new Communication(Protocol.CM_OPERATION_RESPONSE, new CMOperationResponse(status, addrs, ports));
+					
+				} break;
 					
 				default:
 					break;

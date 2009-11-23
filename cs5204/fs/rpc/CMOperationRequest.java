@@ -9,25 +9,27 @@ import java.io.Serializable;
  */
 public class CMOperationRequest implements Payload
 {
-	private String m_filename;
 	private FileOperation m_operation;
+	private String m_filename;
+	private int m_id;
 	private int m_offset;
 	private int m_size;
 	
 	public CMOperationRequest()
 	{
-		this(FileOperation.NO_OP, "", 0, 0);
+		this(FileOperation.NO_OP, "", -1, 0, 0);
 	}
 	
-	public CMOperationRequest(FileOperation operation, String filename)
+	public CMOperationRequest(FileOperation operation, String filename, int id)
 	{
-		this(operation, filename, 0, 0);
+		this(operation, filename, id, 0, 0);
 	}
 	
-	public CMOperationRequest(FileOperation operation, String filename, int offset, int size)
+	public CMOperationRequest(FileOperation operation, String filename, int id, int offset, int size)
 	{
 		m_operation = operation;
 		m_filename = filename;
+		m_id = id;
 		m_offset = offset;
 		m_size = size;
 	}
@@ -70,5 +72,15 @@ public class CMOperationRequest implements Payload
 	public void setSize(int size)
 	{
 		m_size = size;
+	}
+	
+	public int getId()
+	{
+		return m_id;
+	}
+	
+	public void setId(int id)
+	{
+		m_id = id;
 	}
 }

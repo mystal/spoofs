@@ -1,11 +1,11 @@
 package cs5204.fs.master;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Directory
 {
-	private HashMap<String, File> m_files;
-	private HashMap<String, Directory> m_directories;
+	private ConcurrentHashMap<String, File> m_files;
+	private ConcurrentHashMap<String, Directory> m_directories;
 	private String m_name;//needed?
 	private Directory m_parent;//needed?
 	
@@ -13,8 +13,8 @@ public class Directory
 	{
 		m_parent = parent;
 		m_name = name;
-		m_files = new HashMap<String, File>();
-		m_directories = new HashMap<String, Directory>();
+		m_files = new ConcurrentHashMap<String, File>();
+		m_directories = new ConcurrentHashMap<String, Directory>();
 	}
 	
 	public File getFile(String name)
@@ -25,6 +25,12 @@ public class Directory
 	public Directory getDirectory(String name)
 	{
         return m_directories.get(name);
+	}
+	
+	public boolean addDirectory(String name)
+	{
+		m_directories.put(name, new Directory(this, name));
+		return true;
 	}
 	
 	//TODO: add[File|Directory], remove[File|Directory]

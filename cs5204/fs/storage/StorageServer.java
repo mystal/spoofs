@@ -27,8 +27,6 @@ public class StorageServer
 	private static Socket _socket;
 	private static int _id;
 	private static String _ipAddr;
-    private static InputStream _is;
-    private static OutputStream _os;
 
 	public static void main(String [] args)
 	{
@@ -86,7 +84,7 @@ public class StorageServer
 		req = new MSHandshakeRequest(_ipAddr, DEFAULT_PORT);
 		
 		try {
-			oos = new ObjectOutputStream(_os);
+			oos = new ObjectOutputStream(_socket.getOutputStream());
 			comm = new Communication(Protocol.MS_HANDSHAKE_REQUEST, req);
 			oos.writeObject(comm);
             oos.flush();
@@ -96,15 +94,15 @@ public class StorageServer
 		}
 		
 		try {
-			ois = new ObjectInputStream(_is);
+			ois = new ObjectInputStream(_socket.getInputStream());
 			comm = (Communication)ois.readObject();
 			resp = (MSHandshakeResponse)comm.getPayload();
 		}
 		catch (IOException ex) {
-			//TODO: log/fail
+			//TODO: Log/fail
 		}
 		catch (ClassNotFoundException ex) {
-			//TODO: log/fail
+			//TODO: Log/fail
 		}
 		
 		switch (resp.getStatus())
@@ -134,8 +132,5 @@ public class StorageServer
 	{
 		_socket = new Socket();
 		_socket.connect(_masterAddr);
-
-        _is = _socket.getInputStream();
-        _os = _socket.getOutputStream();
 	}
 }

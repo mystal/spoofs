@@ -59,6 +59,8 @@ public class StorageHandler extends AbstractHandler
 						status = StatusCode.OK;
 					
 					resp = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, new MSHandshakeResponse(status, id));
+					
+					//TODO: Log
 				} break;
 				case MS_COMMIT_REQUEST:
 				{

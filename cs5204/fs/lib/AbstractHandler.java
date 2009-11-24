@@ -86,7 +86,6 @@ public abstract class AbstractHandler implements Runnable
 			try {
 				ois = new ObjectInputStream(m_mySocket.getInputStream());
 				req = (Communication)ois.readObject();
-				ois.close();
 			}
 			catch (IOException ex) {
 				//TODO: Log/fail
@@ -103,7 +102,7 @@ public abstract class AbstractHandler implements Runnable
 				oos.flush();
 			}
 			catch (IOException ex) {
-				//TODO: log/fail
+				//TODO: Log/fail
 			}
 			
 			try {

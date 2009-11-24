@@ -49,7 +49,8 @@ public class ClientHandler extends AbstractHandler
 				{
 					CMHandshakeRequest cmReq = (CMHandshakeRequest)req.getPayload();
 					int id = MasterServer.addStorageNode(cmReq.getIPAddr(), cmReq.getPort());
-					resp = new Communication(Protocol.CM_HANDSHAKE_RESPONSE, new CMHandshakeResponse(StatusCode.OK, id, MasterServer.BLOCK_SIZE));					
+					resp = new Communication(Protocol.CM_HANDSHAKE_RESPONSE, new CMHandshakeResponse(StatusCode.OK, id, MasterServer.BLOCK_SIZE));
+					//TODO: Log success
 				} break;
 				
 				case CM_OPERATION_REQUEST:

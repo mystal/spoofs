@@ -55,7 +55,7 @@ public class Filesystem
 		CMHandshakeRequest req = null;
 		CMHandshakeResponse resp = null;
         Socket socket = null;
-
+		
 		_masterAddr = new InetSocketAddress(addr, port);
 		
 		_exec = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
@@ -63,7 +63,7 @@ public class Filesystem
 					new LinkedBlockingQueue<Runnable>(CORE_POOL_SIZE));
 					
 		_counter = new AtomicInteger(0);
-
+		
         try {
             _ipAddr = InetAddress.getLocalHost().getHostAddress();
         }
@@ -87,7 +87,6 @@ public class Filesystem
 			req = new CMHandshakeRequest(_ipAddr, _port);
 			comm = new Communication(Protocol.CM_HANDSHAKE_REQUEST, req);
 			oos.writeObject(comm);
-			//oos.close();
             oos.flush();
 		}
 		catch (IOException ex) {
@@ -98,13 +97,12 @@ public class Filesystem
 			ois = new ObjectInputStream(is);
 			comm = (Communication)ois.readObject();
 			resp = (CMHandshakeResponse)comm.getPayload();
-			//ois.close();
 		}
 		catch (IOException ex) {
-			//TODO: log/fail
+			//TODO: Log/fail
 		}
 		catch (ClassNotFoundException ex) {
-			//TODO: log/fail
+			//TODO: Log/fail
 		}
 		
 		switch (resp.getStatus())
@@ -112,6 +110,7 @@ public class Filesystem
 			case OK:
 				_id = resp.getId();
 				_blockSize = resp.getBlockSize();
+				//TODO: Log success
 				break;
 			case DENIED:
 			default:

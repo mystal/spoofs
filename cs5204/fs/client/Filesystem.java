@@ -137,7 +137,7 @@ public class Filesystem
 		switch (masterResp.getStatus())
 		{
 			case OK:
-				file = new SFile(filepath);
+				file = new SFile(filepath, masterResp.getAddress(), masterResp.getPort(), true);
 				break;
 			case DENIED:
 			default:
@@ -167,7 +167,21 @@ public class Filesystem
 
     public static SFile open(String filepath)
     {
-        return new SFile(filepath);
+        SFile file = null;
+		
+		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.OPEN, filepath, _id));
+		
+		switch (masterResp.getStatus())
+		{
+			case OK:
+				file = new SFile(filepath, masterResp.getAddress(), masterResp.getPort(), true);
+				break;
+			case DENIED:
+			default:
+				//TODO: Log/fail
+		}
+		
+        return file;
     }
 
     public static boolean close(SFile file)
@@ -193,50 +207,37 @@ public class Filesystem
 	{
 		CMOperationResponse masterResp = null;
 		CSOperationResponse storageResp = null;
-		int [] blocks = null;
-		String [] addrs = null;
-		int [] ports = null;
+		String addr = null;
+		int port = -1;
 		
-		masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.APPEND, file.getPath(), _id));
+		if (!file.isOpened())
+			return false;
 		
-		switch (masterResp.getStatus())
+		addr = file.getAddress();
+		port = file.getPort();
+		
+		storageResp = sendStorageOperationRequest(new CSOperationRequest(_id, FileOperation.APPEND, file.getPath(), -1, data), addr, port);
+		
+		switch (storageResp.getStatus())
 		{
 			case OK:
-				blocks = masterResp.getBlockIds();
-				addrs = masterResp.getIPAddresses();
-				ports = masterResp.getPorts();
+				//TODO
 				break;
 			case DENIED:
 			default:
-				//TODO: Log/fail
-				return false;
-		}
-		
-		for (int i = 0 ; i < blocks.length ; i++)
-		{
-			byte [] buffer = new byte[64*1024];//64 MB blocks
-			for (int j = 0 ; j < buffer.length ; j++)
-			{
-				int pos = buffer.length*i + j;
-				if (pos > data.length)
-					break;
-				buffer[j] = data[buffer.length*i + j];
-			}
-			storageResp = sendStorageOperationRequest(new CSOperationRequest(_id, FileOperation.APPEND, blocks[i], -1, data), addrs[i], ports[i]);
-			
-			switch (storageResp.getStatus())
-			{
-				case OK:
-					//TODO: ??
-					break;
-				case DENIED:
-				default:
-					//TODO: Log/fail
-					return false;
-			}
+				//TODO/fail			
 		}
 		
 		return true;
+	}
+	
+	public static byte[] read(SFile file)
+	{
+		byte[] data = null;
+		
+		//TODO
+		
+		return data;
 	}
 	
 	private static CMOperationResponse sendMasterOperationRequest(CMOperationRequest masterReq)

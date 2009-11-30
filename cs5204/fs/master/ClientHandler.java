@@ -48,7 +48,7 @@ public class ClientHandler extends AbstractHandler
 				case CM_HANDSHAKE_REQUEST:
 				{
 					CMHandshakeRequest cmReq = (CMHandshakeRequest)req.getPayload();
-					int id = MasterServer.addStorageNode(cmReq.getIPAddr(), cmReq.getPort());
+					int id = MasterServer.addClientNode(cmReq.getIPAddr(), cmReq.getPort());
 					resp = new Communication(Protocol.CM_HANDSHAKE_RESPONSE, new CMHandshakeResponse(StatusCode.OK, id, MasterServer.BLOCK_SIZE));
 					//TODO: Log success
 				} break;
@@ -56,10 +56,11 @@ public class ClientHandler extends AbstractHandler
 				case CM_OPERATION_REQUEST:
 				{
 					CMOperationRequest cmReq = (CMOperationRequest)req.getPayload();
+					File file = null;
+					Directory dir = null;
 					StatusCode status = StatusCode.DENIED;
-					int [] blockIds = null;
-					String [] addrs = null;
-					int [] ports = null;
+					String addr = null;
+					int port = -1;
 					/**
 					 *	Use the master server to handle all the different operations.
 					 *  Only use master server as needed, as synchronization will be
@@ -68,23 +69,28 @@ public class ClientHandler extends AbstractHandler
 					switch (cmReq.getFileOperation())
 					{
 						case CREATE:
-							if(MasterServer.createFile(cmReq.getFilename()))
+							if((file = MasterServer.createFile(cmReq.getFilename())) != null)
+							{
 								status = StatusCode.OK;
+								addr = MasterServer.getStorIPAddress(file.getStorId());
+								port = MasterServer.getStorPort(file.getStorId());
+							}
 							break;
 						case MKDIR:
-							if(MasterServer.makeDirectory(cmReq.getFilename()))
+							if((dir = MasterServer.makeDirectory(cmReq.getFilename())) != null)
 								status = StatusCode.OK;
 							break;
 						case OPEN:
-							//TODO
+							if ((file = MasterServer.getFile(cmReq.getFilename())) != null)
+							{
+								status = StatusCode.OK;
+								addr = MasterServer.getStorIPAddress(file.getStorId());
+								port = MasterServer.getStorPort(file.getStorId());								
+							}
 							break;
 						case CLOSE:
 							//TODO
 							break;
-						case READ:
-						case WRITE:
-						case APPEND:
-							//TODO
 						case REMOVE:
 							//TODO
 							break;
@@ -97,7 +103,7 @@ public class ClientHandler extends AbstractHandler
 							break;
 					}
 					
-					resp = new Communication(Protocol.CM_OPERATION_RESPONSE, new CMOperationResponse(status, blockIds, addrs, ports));
+					resp = new Communication(Protocol.CM_OPERATION_RESPONSE, new CMOperationResponse(status, addr, port));
 					
 				} break;
 					

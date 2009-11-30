@@ -7,16 +7,14 @@ import java.io.Serializable;
 public class CMOperationResponse implements Payload
 {
 	private StatusCode m_status;
-	private int [] m_blockIds;
-	private String [] m_arrIPAddr;
-	private int [] m_arrPort;
+	private String m_addr;
+	private int m_port;
 	
-	public CMOperationResponse(StatusCode status, int [] blockIds, String [] addrs, int [] ports)
+	public CMOperationResponse(StatusCode status, String addr, int port)
 	{
 		m_status = status;
-		m_blockIds = blockIds;
-		m_arrIPAddr = addrs;
-		m_arrPort = ports;
+		m_addr = addr;
+		m_port = port;
 	}
 	
 	public StatusCode getStatus()
@@ -24,18 +22,13 @@ public class CMOperationResponse implements Payload
 		return m_status;
 	}
 	
-	public int [] getBlockIds()
+	public String getAddress()
 	{
-		return m_blockIds;
+		return m_addr;
 	}
 	
-	public String [] getIPAddresses()
+	public int getPort()
 	{
-		return m_arrIPAddr;
-	}
-	
-	public int [] getPorts()
-	{
-		return m_arrPort;
+		return m_port;
 	}
 }

@@ -27,16 +27,18 @@ public class Directory
         return m_directories.get(name);
 	}
 	
-	public boolean addDirectory(String name)
+	public Directory addDirectory(String name)
 	{
-		m_directories.put(name, new Directory(this, name));
-		return true;
+		Directory dir = new Directory(this, name);
+		m_directories.put(name, dir);
+		return dir;
 	}
 	
-	public boolean addFile(String name)
+	public File addFile(String name)
 	{
-		m_files.put(name, new File(this, name));
-		return true;
+		File file = new File(this, MasterServer.getNextStorId());
+		m_files.put(name, file);
+		return file;
 	}
 	
 	//TODO: remove[File|Directory]

@@ -8,15 +8,15 @@ public class CSOperationRequest implements Payload
 {
 	private int m_id;
 	private FileOperation m_operation;
-	private int m_blockId;
+	private String m_filename;
 	private int m_offset;
 	private byte[] m_data;
 	
-	public CSOperationRequest(int id, FileOperation operation, int blockId, int offset, byte[] data)
+	public CSOperationRequest(int id, FileOperation operation, String filename, int offset, byte[] data)
 	{
 		m_id = id;
 		m_operation = operation;
-		m_blockId = blockId;
+		m_filename = filename;
 		m_offset = offset;
 		m_data = data;
 	}
@@ -31,9 +31,9 @@ public class CSOperationRequest implements Payload
 		return m_operation;
 	}
 	
-	public int getBlockId()
+	public String getFilename()
 	{
-		return m_blockId;
+		return m_filename;
 	}
 	
 	public int getOffset()

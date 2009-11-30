@@ -57,6 +57,7 @@ public class ClientHandler extends AbstractHandler
 				{
 					CMOperationRequest cmReq = (CMOperationRequest)req.getPayload();
 					StatusCode status = StatusCode.DENIED;
+					int [] blockIds = null;
 					String [] addrs = null;
 					int [] ports = null;
 					/**
@@ -67,13 +68,12 @@ public class ClientHandler extends AbstractHandler
 					switch (cmReq.getFileOperation())
 					{
 						case CREATE:
-							//TODO
+							if(MasterServer.createFile(cmReq.getFilename()))
+								status = StatusCode.OK;
 							break;
 						case MKDIR:
 							if(MasterServer.makeDirectory(cmReq.getFilename()))
-							{
 								status = StatusCode.OK;
-							}
 							break;
 						case OPEN:
 							//TODO
@@ -97,7 +97,7 @@ public class ClientHandler extends AbstractHandler
 							break;
 					}
 					
-					resp = new Communication(Protocol.CM_OPERATION_RESPONSE, new CMOperationResponse(status, addrs, ports));
+					resp = new Communication(Protocol.CM_OPERATION_RESPONSE, new CMOperationResponse(status, blockIds, addrs, ports));
 					
 				} break;
 					

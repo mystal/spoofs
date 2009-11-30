@@ -33,6 +33,12 @@ public class Directory
 		return true;
 	}
 	
-	//TODO: add[File|Directory], remove[File|Directory]
+	public boolean addFile(String name)
+	{
+		m_files.put(name, new File(this, name));
+		return true;
+	}
+	
+	//TODO: remove[File|Directory]
 	
 }

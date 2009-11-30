@@ -64,6 +64,17 @@ public class MasterServer
 		
 		return currDir.addDirectory(dirs.get(dirs.size()-1));
 	}
+	
+	public static boolean createFile(String filePath)
+	{
+		ArrayList<String> dirs = StringUtil.explodeString(filePath);
+		Directory currDir = _rootDir;
+		for (int i = 0 ; i < dirs.size()-1 ; i++)
+			if ((currDir = currDir.getDirectory(dirs.get(i))) == null)
+				return false;
+		
+		return currDir.addFile(dirs.get(dirs.size()-1));
+	}
 
 	private static class StorageNode
 	{

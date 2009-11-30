@@ -9,6 +9,8 @@ import cs5204.fs.rpc.CMHandshakeRequest;
 import cs5204.fs.rpc.CMHandshakeResponse;
 import cs5204.fs.rpc.CMOperationRequest;
 import cs5204.fs.rpc.CMOperationResponse;
+import cs5204.fs.rpc.CSOperationRequest;
+import cs5204.fs.rpc.CSOperationResponse;
 
 import java.io.InputStream;
 import java.io.IOException;
@@ -44,11 +46,11 @@ public class Filesystem
 	private static final int _port = 3009;
 	private static ExecutorService _exec;
 	private static AtomicInteger _counter;
+	
+	//TODO: Caching of SFile handles
 
     public static void init(String addr, int port) throws Exception
     {
-        InputStream is = null;
-        OutputStream os = null;
 		ObjectInputStream ois = null;
 		ObjectOutputStream oos = null;
 		Communication comm = null;
@@ -74,16 +76,13 @@ public class Filesystem
         try {
             socket = new Socket();
             socket.connect(_masterAddr);
-
-            is = socket.getInputStream();
-            os = socket.getOutputStream();
         }
         catch (IOException ex) {
             //TODO: Log/fail
         }
 		
 		try {
-			oos = new ObjectOutputStream(os);
+			oos = new ObjectOutputStream(socket.getOutputStream());
 			req = new CMHandshakeRequest(_ipAddr, _port);
 			comm = new Communication(Protocol.CM_HANDSHAKE_REQUEST, req);
 			oos.writeObject(comm);
@@ -94,7 +93,7 @@ public class Filesystem
 		}
 		
 		try {
-			ois = new ObjectInputStream(is);
+			ois = new ObjectInputStream(socket.getInputStream());
 			comm = (Communication)ois.readObject();
 			resp = (CMHandshakeResponse)comm.getPayload();
 		}
@@ -132,33 +131,26 @@ public class Filesystem
 
     public static SFile createFile(String filepath)
     {
-        return new SFile(filepath);
+		SFile file = null;
+		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.CREATE, filepath, _id));
+		
+		switch (masterResp.getStatus())
+		{
+			case OK:
+				file = new SFile(filepath);
+				break;
+			case DENIED:
+			default:
+				//TODO: Log/fail
+		}
+		
+        return file;
     }
 
     public static boolean createDirectory(String dirpath)
     {
 		boolean success = false;
-		int count = _counter.getAndIncrement();
-		Communication req = null;
-		Communication resp = null;
-		CMOperationResponse masterResp = null;
-		
-		req = new Communication(
-							Protocol.CM_OPERATION_REQUEST,
-							new CMOperationRequest(FileOperation.MKDIR, dirpath, _id));
-		
-		try {
-			//Submit a Callable, get result of a future...the wonders of java.util.concurrent
-			resp = _exec.submit(new ClientTask(_masterAddr, req, count)).get();
-		}
-		catch (InterruptedException ex) {
-			//TODO: Log/fail
-		}
-		catch (ExecutionException ex) {
-			//TODO: Log/fail
-		}
-		
-		masterResp = (CMOperationResponse)resp.getPayload();
+		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.MKDIR, dirpath, _id));
 		
 		switch (masterResp.getStatus())
 		{
@@ -195,7 +187,111 @@ public class Filesystem
 
     //TODO: get attribute?
 	
-	private static class ClientTask implements Callable<Communication>
+	//For use with SFile objects
+	
+	public static boolean append(SFile file, byte[] data)
+	{
+		CMOperationResponse masterResp = null;
+		CSOperationResponse storageResp = null;
+		int [] blocks = null;
+		String [] addrs = null;
+		int [] ports = null;
+		
+		masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.APPEND, file.getPath(), _id));
+		
+		switch (masterResp.getStatus())
+		{
+			case OK:
+				blocks = masterResp.getBlockIds();
+				addrs = masterResp.getIPAddresses();
+				ports = masterResp.getPorts();
+				break;
+			case DENIED:
+			default:
+				//TODO: Log/fail
+				return false;
+		}
+		
+		for (int i = 0 ; i < blocks.length ; i++)
+		{
+			byte [] buffer = new byte[64*1024];//64 MB blocks
+			for (int j = 0 ; j < buffer.length ; j++)
+			{
+				int pos = buffer.length*i + j;
+				if (pos > data.length)
+					break;
+				buffer[j] = data[buffer.length*i + j];
+			}
+			storageResp = sendStorageOperationRequest(new CSOperationRequest(_id, FileOperation.APPEND, blocks[i], -1, data), addrs[i], ports[i]);
+			
+			switch (storageResp.getStatus())
+			{
+				case OK:
+					//TODO: ??
+					break;
+				case DENIED:
+				default:
+					//TODO: Log/fail
+					return false;
+			}
+		}
+		
+		return true;
+	}
+	
+	private static CMOperationResponse sendMasterOperationRequest(CMOperationRequest masterReq)
+	{
+		int count = _counter.getAndIncrement();
+		Communication req = null;
+		Communication resp = null;
+		ClientTask task = null;
+		
+		req = new Communication(Protocol.CM_OPERATION_REQUEST, masterReq);
+		
+		try {
+			//Submit a ClientTask, get result of a future which will return null on completion
+			//...the wonders of java.util.concurrent
+			task = new ClientTask(_masterAddr, req, count);
+			_exec.submit(task).get();
+			resp = task.getResponse();
+		}
+		catch (InterruptedException ex) {
+			//TODO: Log/fail
+		}
+		catch (ExecutionException ex) {
+			//TODO: Log/fail
+		}
+		
+		return (CMOperationResponse)resp.getPayload();
+	}
+	
+	private static CSOperationResponse sendStorageOperationRequest(CSOperationRequest storageReq, String ipAddr, int port)
+	{
+		int count = _counter.getAndIncrement();
+		Communication req = null;
+		Communication resp = null;
+		ClientTask task = null;
+		
+		req = new Communication(Protocol.CS_OPERATION_REQUEST, storageReq);
+		
+		try {
+			//Submit a ClientTask, get result of a future which will return null on completion
+			//...the wonders of java.util.concurrent
+			task = new ClientTask(new InetSocketAddress(ipAddr, port), req, count);
+			_exec.submit(task).get();
+			resp = task.getResponse();
+		}
+		catch (InterruptedException ex) {
+			//TODO: Log/fail
+		}
+		catch (ExecutionException ex) {
+			//TODO: Log/fail
+		}
+		
+		return (CSOperationResponse)resp.getPayload();
+	}
+	
+	private static class ClientTask implements Runnable
 	{
 		private SocketAddress m_address;
 		private Communication m_req;
@@ -254,7 +350,7 @@ public class Filesystem
 			}
 		}
 		
-		public Communication call()
+		public Communication getResponse()
 		{
 			return m_resp;
 		}

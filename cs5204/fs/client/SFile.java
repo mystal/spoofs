@@ -13,4 +13,9 @@ public class SFile
     {
         return filepath;
     }
+	
+	public boolean append(byte[] data)
+	{
+		return Filesystem.append(this, data);
+	}
 }

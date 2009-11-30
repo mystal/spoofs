@@ -13,5 +13,10 @@ public class SimpleClient
 		catch (Exception ex) {
 			System.out.println("NOOOOO!!!!    " + ex);
 		}
+		
+		if(Filesystem.createDirectory("/foo"))
+			System.out.println("Success in creating directory /foo!");
+		else
+			System.out.println("Failed to create /foo");
 	}
 }

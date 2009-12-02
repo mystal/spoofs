@@ -231,13 +231,46 @@ public class Filesystem
 		return true;
 	}
 	
-	public static byte[] read(SFile file)
+	public static boolean read(SFile file, byte [] data, int off, int len)
 	{
-		byte[] data = null;
+		CSOperationResponse csResp = sendStorageOperationRequest(
+											new CSOperationRequest(_id, FileOperation.READ, file.getPath(), null, off, len),
+											file.getAddress(),
+											file.getPort());
+		switch (csResp.getStatus())
+		{
+			case OK:
+				byte[] reply = csResp.getData();
+				for (int i = 0 ; i < len ; i++)
+					data[i] = reply[i];
+				break;
+			case DENIED:
+			default:
+				//TODO: Log
+				return false;
+		}
 		
-		//TODO
+		return true;
+	}
+	
+	public static boolean write(SFile file, byte [] data, int off, int len)
+	{
+		CSOperationResponse csResp = sendStorageOperationRequest(
+											new CSOperationRequest(_id, FileOperation.WRITE, file.getPath(), data, off, len),
+											file.getAddress(),
+											file.getPort());
+		switch (csResp.getStatus())
+		{
+			case OK:
+				//Nothing?
+				break;
+			case DENIED:
+			default:
+				//TODO: Log
+				return false;
+		}
 		
-		return data;
+		return true;
 	}
 	
 	private static CMOperationResponse sendMasterOperationRequest(CMOperationRequest masterReq)

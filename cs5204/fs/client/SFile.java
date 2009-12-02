@@ -38,9 +38,14 @@ public class SFile
 		return Filesystem.append(this, data);
 	}
 	
-	public byte [] read()
+	public boolean write(byte [] data)
 	{
-		return Filesystem.read(this);
+		return Filesystem.write(this, data, m_pos, data.length);
+	}
+	
+	public boolean read(byte [] data)
+	{
+		return Filesystem.read(this, data, m_pos, data.length);
 	}
 	
 	public void seek(int pos)

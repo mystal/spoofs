@@ -205,7 +205,7 @@ public class Filesystem
 	
 	public static boolean append(SFile file, byte[] data)
 	{
-		CMOperationResponse masterResp = null;
+		/*CMOperationResponse masterResp = null;
 		CSOperationResponse storageResp = null;
 		String addr = null;
 		int port = -1;
@@ -226,7 +226,7 @@ public class Filesystem
 			case DENIED:
 			default:
 				//TODO/fail			
-		}
+		}*/
 		
 		return true;
 	}

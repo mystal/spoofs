@@ -9,16 +9,18 @@ public class CSOperationRequest implements Payload
 	private int m_id;
 	private FileOperation m_operation;
 	private String m_filename;
-	private int m_offset;
 	private byte[] m_data;
+	private int m_offset;
+	private int m_length;
 	
-	public CSOperationRequest(int id, FileOperation operation, String filename, int offset, byte[] data)
+	public CSOperationRequest(int id, FileOperation operation, String filename, byte[] data, int offset, int length)
 	{
 		m_id = id;
 		m_operation = operation;
 		m_filename = filename;
 		m_offset = offset;
 		m_data = data;
+		m_length = length;
 	}
 	
 	public int getId()
@@ -44,5 +46,10 @@ public class CSOperationRequest implements Payload
 	public byte[] getData()
 	{
 		return m_data;
+	}
+	
+	public int getLength()
+	{
+		return m_length;
 	}
 }

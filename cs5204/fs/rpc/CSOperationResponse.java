@@ -7,13 +7,20 @@ import java.io.Serializable;
 public class CSOperationResponse implements Payload
 {
 	private StatusCode m_status;
-	public CSOperationResponse(StatusCode status)
+	private byte [] m_data;
+	public CSOperationResponse(StatusCode status, byte [] data)
 	{
 		m_status = status;
+		m_data = data;
 	}
 	
 	public StatusCode getStatus()
 	{
 		return m_status;
+	}
+	
+	public byte [] getData()
+	{
+		return m_data;
 	}
 }

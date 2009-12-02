@@ -48,6 +48,11 @@ public class SFile
 		m_pos = pos;
 	}
 	
+	public int tell()
+	{
+		return m_pos;
+	}
+	
 	public boolean isOpened()
 	{
 		return m_opened;

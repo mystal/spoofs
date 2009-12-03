@@ -92,10 +92,12 @@ public class ClientHandler extends AbstractHandler
 							//TODO
 							break;
 						case REMOVE:
-							//TODO
+							if (MasterServer.removeFile(cmReq.getFilename()))
+								status = StatusCode.OK;
 							break;
 						case RMDIR:
-							//TODO
+							if (MasterServer.removeDirectory(cmReq.getFilename()))
+								status = StatusCode.OK;
 							break;
 						case NO_OP:
 						default:

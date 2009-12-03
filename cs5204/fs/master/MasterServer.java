@@ -38,10 +38,6 @@ public class MasterServer
 	
 	public static void main(String[] args)
 	{
-		//TODO: decide what args to send in to the main() method
-        //      possibly pass in blockSize,
-		//TODO: set up
-		
 		_rootDir = new Directory(null, "");
 		_storMap = new ConcurrentHashMap<Integer, StorageNode>();
 		_clientMap = new ConcurrentHashMap<Integer, ClientNode>();
@@ -59,8 +55,6 @@ public class MasterServer
 		storageHandler.start();
 		clientHandler.start();
 	}
-
-    //TODO: write a file, read a file, other public methods
 
     public static int addStorageNode(String ipAddr, int clientPort, int masterPort)
     {
@@ -87,6 +81,17 @@ public class MasterServer
 		return currDir.addDirectory(dirs.get(dirs.size()-1));
 	}
 	
+	public static boolean removeDirectory(String dirPath)
+	{
+		ArrayList<String> dirs = StringUtil.explodeString(dirPath);
+		Directory currDir = _rootDir;
+		for (int i = 0 ; i < dirs.size()-1 ; i++)
+			if ((currDir = currDir.getDirectory(dirs.get(i))) == null)
+				return false;
+		
+		return currDir.removeDirectory(dirs.get(dirs.size()-1));
+	}
+	
 	public static File createFile(String filePath)
 	{
 		ArrayList<String> dirs = StringUtil.explodeString(filePath);
@@ -109,6 +114,17 @@ public class MasterServer
 		}
 		
 		return currDir.addFile(dirs.get(dirs.size()-1), storId);
+	}
+	
+	public static boolean removeFile(String filePath)
+	{
+		ArrayList<String> dirs = StringUtil.explodeString(filePath);
+		Directory currDir = _rootDir;
+		for (int i = 0 ; i < dirs.size()-1 ; i++)
+			if ((currDir = currDir.getDirectory(dirs.get(i))) == null)
+				return false;
+		
+		return currDir.removeFile(dirs.get(dirs.size()-1));
 	}
 	
 	public static File getFile(String filePath)

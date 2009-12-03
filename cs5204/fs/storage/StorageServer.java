@@ -5,20 +5,14 @@ import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MSHandshakeRequest;
 import cs5204.fs.rpc.MSHandshakeResponse;
 import cs5204.fs.common.Protocol;
+import cs5204.fs.lib.Worker;
 
 import java.io.File;
-import java.io.RandomAccessFile;
-import java.io.InputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
-import java.io.OutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,10 +25,11 @@ public class StorageServer
 	private static final int DEFAULT_MASTER_PORT = 2060;
 	private static final int MAX_ATTEMPTS = 5;
 	
-	private static SocketAddress _masterAddr;
-	private static Socket _socket;
+	private static String _masterAddr;
+	private static int _masterPort;
 	private static int _id;
 	private static String _ipAddr;
+	private static Worker _worker;
 	
 	private static File _rootDir;
 	private static AtomicInteger _fileCounter;
@@ -49,8 +44,9 @@ public class StorageServer
 		}
 		
 		//First initiate the contact with the master
-		String addr = args[0];
-		int port = Integer.parseInt(args[1]);
+		_masterAddr = args[0];
+		_masterPort = Integer.parseInt(args[1]);
+		_worker = new Worker();
 		
 		//Get cwd
 		_rootDir = new File(new File(System.getProperty("user.dir")), "spoofs_files");
@@ -58,8 +54,6 @@ public class StorageServer
 		_fileCounter = new AtomicInteger(0);
 		_fileMap = new ConcurrentHashMap<String, StorFile>();
 		
-		_masterAddr = new InetSocketAddress(addr, port);
-		_socket = new Socket();
         try {
 		    _ipAddr = InetAddress.getLocalHost().getHostAddress();
         }
@@ -81,78 +75,39 @@ public class StorageServer
 		//TODO: Log successful connection
 		
 		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_CLIENT_PORT));
+		Thread masterHandler = new Thread(new MasterHandler(DEFAULT_MASTER_PORT));
 		
 		clientHandler.start();
-		//TODO: Start master handler
+		masterHandler.start();
 	}
 	
 	public static boolean initiateContact()
 	{
-		ObjectInputStream ois = null;
-		ObjectOutputStream oos = null;
-		Communication comm = null;
-		MSHandshakeRequest req = null;
-		MSHandshakeResponse resp = null;
-		boolean success = false;
+		Communication resp = _worker.submitRequest(
+								new Communication(
+									Protocol.MS_HANDSHAKE_REQUEST,
+									new MSHandshakeRequest(
+										_ipAddr, 
+										DEFAULT_CLIENT_PORT, 
+										DEFAULT_MASTER_PORT)),
+								_masterAddr,
+								_masterPort);
 		
-        try {
-            establishSocketConnection();
-        }
-        catch (IOException ex) {
-            //TODO: Log/fail
-        }
-		
-		req = new MSHandshakeRequest(_ipAddr, DEFAULT_CLIENT_PORT, DEFAULT_MASTER_PORT);
-		
-		try {
-			oos = new ObjectOutputStream(_socket.getOutputStream());
-			comm = new Communication(Protocol.MS_HANDSHAKE_REQUEST, req);
-			oos.writeObject(comm);
-            oos.flush();
-		}
-		catch (IOException ex) {
-			//TODO: Log/fail
-		}
-		
-		try {
-			ois = new ObjectInputStream(_socket.getInputStream());
-			comm = (Communication)ois.readObject();
-			resp = (MSHandshakeResponse)comm.getPayload();
-		}
-		catch (IOException ex) {
-			//TODO: Log/fail
-		}
-		catch (ClassNotFoundException ex) {
-			//TODO: Log/fail
-		}
-		
-		switch (resp.getStatus())
+		if (resp == null)
+			return false;
+			
+		MSHandshakeResponse msResp = (MSHandshakeResponse)resp.getPayload();
+		switch(msResp.getStatus())
 		{
 			case OK:
-				_id = resp.getId();
-				success = true;
+				_id = msResp.getId();
 				break;
 			case DENIED:
 			default:
-				success = false;
-				break;
+				return false;
 		}
 		
-        try {
-            oos.close();
-            ois.close();
-        }
-		catch (IOException ex) {
-			//TODO: Log/fail
-		}
-
-		return success;
-	}
-	
-	public static void establishSocketConnection() throws IOException
-	{
-		_socket = new Socket();
-		_socket.connect(_masterAddr);
+		return true;
 	}
 	
 	public static boolean createFile(String filename)

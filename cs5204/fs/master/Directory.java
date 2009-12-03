@@ -17,6 +17,11 @@ public class Directory
 		m_directories = new ConcurrentHashMap<String, Directory>();
 	}
 	
+	public boolean isEmpty()
+	{
+		return m_files.isEmpty() && m_directories.isEmpty();
+	}
+	
 	public File getFile(String name)
 	{
         return m_files.get(name);
@@ -41,6 +46,18 @@ public class Directory
 		return file;
 	}
 	
-	//TODO: remove[File|Directory]
+	public boolean removeFile(String name)
+	{
+		m_files.remove(name);
+		return true;
+	}
 	
+	public boolean removeDirectory(String name)
+	{
+		Directory toRemove = m_directories.get(name);
+		if (toRemove != null && toRemove.isEmpty())
+			return false;
+		m_directories.remove(name);
+		return true;
+	}
 }

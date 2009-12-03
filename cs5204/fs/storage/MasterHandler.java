@@ -10,8 +10,6 @@ import cs5204.fs.common.StatusCode;
 import cs5204.fs.common.FileOperation;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 import java.net.Socket;
 import java.net.ServerSocket;

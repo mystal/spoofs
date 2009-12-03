@@ -1,6 +1,15 @@
 package cs5204.fs.master;
 
 import cs5204.fs.lib.StringUtil;
+import cs5204.fs.lib.Worker;
+
+import cs5204.fs.rpc.MSCommitRequest;
+import cs5204.fs.rpc.MSCommitResponse;
+import cs5204.fs.rpc.Payload;
+import cs5204.fs.rpc.Communication;
+import cs5204.fs.common.Protocol;
+import cs5204.fs.common.StatusCode;
+import cs5204.fs.common.FileOperation;
 
 import java.net.InetAddress;
 
@@ -25,6 +34,8 @@ public class MasterServer
 	private static ConcurrentHashMap<Integer, StorageNode> _storMap;
 	private static ConcurrentHashMap<Integer, ClientNode> _clientMap;
 	
+	private static Worker _worker;
+	
 	public static void main(String[] args)
 	{
 		//TODO: decide what args to send in to the main() method
@@ -40,6 +51,8 @@ public class MasterServer
 		_currStorId = 0;
 		_currStorIdLock = new ReentrantLock();
 		
+		_worker = new Worker();
+		
 		Thread storageHandler = new Thread(new StorageHandler(DEFAULT_STORAGE_PORT));
 		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_CLIENT_PORT));
 		
@@ -49,10 +62,10 @@ public class MasterServer
 
     //TODO: write a file, read a file, other public methods
 
-    public static int addStorageNode(String ipAddr, int port)
+    public static int addStorageNode(String ipAddr, int clientPort, int masterPort)
     {
 		int id = _storIdCount.getAndIncrement();
-        _storMap.put(id, new StorageNode(ipAddr, port));
+        _storMap.put(id, new StorageNode(ipAddr, clientPort, masterPort));
         return id;
     }
 	
@@ -82,7 +95,20 @@ public class MasterServer
 			if ((currDir = currDir.getDirectory(dirs.get(i))) == null)
 				return null;
 		
-		return currDir.addFile(dirs.get(dirs.size()-1));
+		int storId = getNextStorId();
+		MSCommitResponse msResp = sendStorageCommitRequest(storId, new MSCommitRequest(FileOperation.CREATE, filePath));
+		
+		switch (msResp.getStatus())
+		{
+			case OK:
+				//Nothing
+				break;
+			case DENIED:
+			default:
+				//TODO: Log/fail
+		}
+		
+		return currDir.addFile(dirs.get(dirs.size()-1), storId);
 	}
 	
 	public static File getFile(String filePath)
@@ -116,23 +142,53 @@ public class MasterServer
 	
 	public static String getStorIPAddress(int storId)
 	{
-		return _storMap.get(storId).getAddress();
+		StorageNode stor = _storMap.get(storId);
+		if (stor == null) return null;
+		return stor.getAddress();
 	}
 	
-	public static int getStorPort(int storId)
+	public static int getStorClientPort(int storId)
 	{
-		return _storMap.get(storId).getPort();
+		StorageNode stor = _storMap.get(storId);
+		if (stor == null) return -1;
+		return stor.getClientPort();
+	}
+	
+	public static int getStorMasterPort(int storId)
+	{
+		StorageNode stor = _storMap.get(storId);
+		if (stor == null) return -1;
+		return stor.getMasterPort();
+	}
+	
+	private static MSCommitResponse sendStorageCommitRequest(int storId, MSCommitRequest req)
+	{
+		Communication comm = null;
+		
+		String addr = getStorIPAddress(storId);
+		int port = getStorMasterPort(storId);
+		if (addr == null || addr.length() == 0 || port < 0 || port > 65536)
+			return null;
+		
+		comm = _worker.submitRequest(new Communication(Protocol.MS_COMMIT_REQUEST, req), addr, port);
+		
+		if (comm == null) 
+			return null;
+		
+		return (MSCommitResponse)comm.getPayload();
 	}
 
 	private static class StorageNode
 	{
 		private String m_addr;
-		private int m_port;
+		private int m_clientPort;
+		private int m_masterPort;
 
-		public StorageNode(String addr, int port)
+		public StorageNode(String addr, int clientPort, int masterPort)
 		{
 			m_addr = addr;
-            m_port = port;
+            m_clientPort = clientPort;
+			m_masterPort = masterPort;
 		}
 		
 		public String getAddress()
@@ -140,9 +196,14 @@ public class MasterServer
 			return m_addr;
 		}
 		
-		public int getPort()
+		public int getClientPort()
 		{
-			return m_port;
+			return m_clientPort;
+		}
+		
+		public int getMasterPort()
+		{
+			return m_masterPort;
 		}
 	}
 	

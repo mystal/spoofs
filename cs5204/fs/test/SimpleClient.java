@@ -8,7 +8,7 @@ public class SimpleClient
 	public static void main(String [] args)
 	{
 		try {
-			Filesystem.init("localhost", 2010);
+			Filesystem.Connect("localhost", 2010);
 		}
 		catch (Exception ex) {
 			System.out.println("NOOOOO!!!!\n" + ex);

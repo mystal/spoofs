@@ -34,9 +34,9 @@ public class Directory
 		return dir;
 	}
 	
-	public File addFile(String name)
+	public File addFile(String name, int storId)
 	{
-		File file = new File(this, MasterServer.getNextStorId());
+		File file = new File(this, storId);
 		m_files.put(name, file);
 		return file;
 	}

@@ -53,13 +53,23 @@ public class SFile
 		m_pos = pos;
 	}
 	
+	public void seekEnd()
+	{
+		m_pos = -1;
+	}
+	
 	public int tell()
 	{
 		return m_pos;
 	}
 	
-	public boolean isOpened()
+	protected boolean isOpened()
 	{
 		return m_opened;
+	}
+	
+	protected void setOpened(boolean opened)
+	{
+		m_opened = opened;
 	}
 }

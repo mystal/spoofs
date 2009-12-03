@@ -53,9 +53,10 @@ public class StorageHandler extends AbstractHandler
 					StatusCode status = StatusCode.DENIED;
 					int id = -1;
 					String addr = msReq.getIPAddr();
-					int port = msReq.getPort();
+					int clientPort = msReq.getClientPort();
+					int masterPort = msReq.getMasterPort();
 					
-					if ((id = MasterServer.addStorageNode(addr, port)) != -1)
+					if ((id = MasterServer.addStorageNode(addr, clientPort, masterPort)) != -1)
 						status = StatusCode.OK;
 					
 					resp = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, new MSHandshakeResponse(status, id));

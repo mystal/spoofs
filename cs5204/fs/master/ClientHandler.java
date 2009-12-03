@@ -73,7 +73,7 @@ public class ClientHandler extends AbstractHandler
 							{
 								status = StatusCode.OK;
 								addr = MasterServer.getStorIPAddress(file.getStorId());
-								port = MasterServer.getStorPort(file.getStorId());
+								port = MasterServer.getStorClientPort(file.getStorId());
 							}
 							break;
 						case MKDIR:
@@ -85,7 +85,7 @@ public class ClientHandler extends AbstractHandler
 							{
 								status = StatusCode.OK;
 								addr = MasterServer.getStorIPAddress(file.getStorId());
-								port = MasterServer.getStorPort(file.getStorId());								
+								port = MasterServer.getStorClientPort(file.getStorId());								
 							}
 							break;
 						case CLOSE:

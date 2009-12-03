@@ -27,7 +27,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class StorageServer
 {
-	private static final int DEFAULT_PORT = 2059;
+	private static final int DEFAULT_CLIENT_PORT = 2059;
+	private static final int DEFAULT_MASTER_PORT = 2060;
 	private static final int MAX_ATTEMPTS = 5;
 	
 	private static SocketAddress _masterAddr;
@@ -79,9 +80,10 @@ public class StorageServer
 		
 		//TODO: Log successful connection
 		
-		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_PORT));
+		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_CLIENT_PORT));
 		
 		clientHandler.start();
+		//TODO: Start master handler
 	}
 	
 	public static boolean initiateContact()
@@ -100,7 +102,7 @@ public class StorageServer
             //TODO: Log/fail
         }
 		
-		req = new MSHandshakeRequest(_ipAddr, DEFAULT_PORT);
+		req = new MSHandshakeRequest(_ipAddr, DEFAULT_CLIENT_PORT, DEFAULT_MASTER_PORT);
 		
 		try {
 			oos = new ObjectOutputStream(_socket.getOutputStream());

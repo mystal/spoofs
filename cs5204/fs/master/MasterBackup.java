@@ -1,6 +1,7 @@
 package cs5204.fs.master;
 
 import cs5204.fs.lib.Worker;
+import cs5204.fs.common.NodeType;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -56,7 +57,7 @@ public class MasterBackup
 		
 		//TODO: Log successful connection
 
-		Thread kaClient = new Thread(new KeepAliveClient(_id, _masterAddr, _masterKeepAlivePort, _worker));
+		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, _id, _masterAddr, _masterKeepAlivePort, _worker));
 		Thread backupHandler = new Thread(new BackupHandler(DEFAULT_MASTER_BACKUP_PORT));
 
 		kaClient.start();

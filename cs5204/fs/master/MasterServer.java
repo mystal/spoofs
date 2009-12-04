@@ -24,12 +24,14 @@ import java.util.logging.Logger;
 public class MasterServer
 {
     public static final int BLOCK_SIZE = 64; //MB
-	private static final int DEFAULT_STORAGE_PORT = 2009;
+	private static final int DEFAULT_MAIN_PORT = 2009;
+	/*private static final int DEFAULT_STORAGE_PORT = 2009;
 	private static final int DEFAULT_CLIENT_PORT = 2010;
-	private static final int DEFAULT_BACKUP_PORT = 2011;
+	private static final int DEFAULT_BACKUP_PORT = 2011;*/
 	private static final int DEFAULT_KEEPALIVE_PORT = 2012;
 
-    private static AtomicInteger _idCount;
+    private static AtomicInteger _storIdCount;
+	private static AtomicInteger _clientIdCount;
 	private static int _currStorId;
 	private static Lock _currStorIdLock;
 
@@ -55,22 +57,29 @@ public class MasterServer
 		_clientMap = new ConcurrentHashMap<Integer, ClientNode>();
         _backup = null;
 		
-		_idCount = new AtomicInteger(0);
+		/* NOTE - The storId needs to increment independent of clientId
+					because it is assigned in a round-robin fashion to hold files */
+		_storIdCount = new AtomicInteger(0);
+		_clientIdCount = new AtomicInteger(0);
 		_currStorId = 0;
 		_currStorIdLock = new ReentrantLock();
 		
 		_worker = new Worker();
 		
-		Thread storageHandler = new Thread(new StorageHandler(DEFAULT_STORAGE_PORT));
+		/*Thread storageHandler = new Thread(new StorageHandler(DEFAULT_STORAGE_PORT));
 		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_CLIENT_PORT));
-		Thread backupHandler = new Thread(new ClientHandler(DEFAULT_BACKUP_PORT));
+		Thread backupHandler = new Thread(new ClientHandler(DEFAULT_BACKUP_PORT));*/
+		
+		Thread mainHandler = new Thread(new MainHandler(DEFAULT_MAIN_PORT));
         Thread kaHandler = new Thread(new KeepAliveHandler(DEFAULT_KEEPALIVE_PORT));
 
 		_log.info("...done.");
 
-		storageHandler.start();
+		/*storageHandler.start();
 		clientHandler.start();
-		backupHandler.start();
+		backupHandler.start();*/
+		
+		mainHandler.start();
 		kaHandler.start();
 
 		_log.info("Ready to accept requests from clients...\n");
@@ -78,7 +87,7 @@ public class MasterServer
 
     public static int addStorageNode(String ipAddr, int clientPort, int masterPort)
     {
-		int id = _idCount.getAndIncrement();
+		int id = _storIdCount.getAndIncrement();
         _storMap.put(id, new StorageNode(ipAddr, clientPort, masterPort));
 
 		/*Communication resp = _worker.submitRequest(
@@ -94,7 +103,7 @@ public class MasterServer
 	
 	public static int addClientNode(String ipAddr, int port)
 	{
-		int id = _idCount.getAndIncrement();
+		int id = _clientIdCount.getAndIncrement();
 		_clientMap.put(id, new ClientNode(ipAddr, port));
         return id;
 	}
@@ -103,7 +112,7 @@ public class MasterServer
 	{
         if (_backup == null)
         {
-            int id = _idCount.getAndIncrement();
+            int id = 0;//TODO: I don't think we need an ID associated with a Backup node
             _backup = new BackupNode(id, ipAddr, port);
             return id;
         }
@@ -187,7 +196,7 @@ public class MasterServer
 		{
 			//complicated critical section requiring Lock
 			_currStorIdLock.lock();
-			if (_currStorId > _idCount.get())
+			if (_currStorId > _storIdCount.get())
 				_currStorId = 0;
 			if (_storMap.get(_currStorId) != null)
 				id = _currStorId;

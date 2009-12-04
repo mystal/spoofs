@@ -9,18 +9,6 @@ import cs5204.fs.rpc.MSHandshakeResponse;
 import cs5204.fs.common.Protocol;
 
 import java.net.Socket;
-import java.net.ServerSocket;
-
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.IOException;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class StorageHandler extends AbstractHandler
 {
@@ -62,11 +50,6 @@ public class StorageHandler extends AbstractHandler
 					resp = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, new MSHandshakeResponse(status, id));
 					
 					//TODO: Log
-				} break;
-
-				case MS_COMMIT_REQUEST:
-				{
-					//TODO: Handle this
 				} break;
 
 				default:

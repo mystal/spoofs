@@ -1,13 +1,23 @@
 package cs5204.fs.rpc;
 
+import cs5204.fs.common.NodeType;
+
 import java.io.Serializable;
 
 public class KARequest
 {
 	private int m_id;
-	public KARequest(int id)
+	private NodeType m_type;
+	
+	public KARequest(NodeType type, int id)
 	{
+		m_type = type;
 		m_id = id;
+	}
+	
+	public NodeType getNodeType()
+	{
+		return m_type;
 	}
 	
 	public int getId()

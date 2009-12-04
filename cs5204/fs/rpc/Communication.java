@@ -8,6 +8,7 @@ public class Communication implements Serializable
 {
 	private Protocol m_protocol;
 	private Payload m_payload;
+
 	public Communication(Protocol protocol, Payload payload)
 	{
 		m_protocol = protocol;

@@ -108,8 +108,9 @@ public class ClientHandler extends AbstractHandler
 					resp = new Communication(Protocol.CM_OPERATION_RESPONSE, new CMOperationResponse(status, addr, port));
 					
 				} break;
-					
+
 				default:
+                    //TODO: log unrecognized request
 					break;
 			}
 			

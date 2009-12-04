@@ -15,12 +15,12 @@ public class KeepAliveClient implements Runnable
 	private int m_masterPort;
 	private Worker m_worker;
 	
-	public KeepAliveClient(int id, String addr, int port)
+	public KeepAliveClient(int id, String addr, int port, Worker worker)
 	{
 		m_id = id;
 		m_masterAddr = addr;
 		m_masterPort = port;
-		m_worker = new Worker();
+		m_worker = worker;
 	}
 	
 	public void run()
@@ -36,7 +36,7 @@ public class KeepAliveClient implements Runnable
 									Protocol.KA_REQUEST,
 									new KARequest(m_id)),
 								m_masterAddr,
-								m_masterPort));
+								m_masterPort);
 		if (resp == null)
 			return false;
 		KAResponse kaResp = (KAResponse)resp.getPayload();

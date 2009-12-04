@@ -63,10 +63,12 @@ public class StorageHandler extends AbstractHandler
 					
 					//TODO: Log
 				} break;
+
 				case MS_COMMIT_REQUEST:
 				{
 					//TODO: Handle this
 				} break;
+
 				default:
 					break;
 			}

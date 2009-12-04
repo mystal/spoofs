@@ -18,32 +18,44 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Logger;
 
 public class MasterServer
 {
     public static final int BLOCK_SIZE = 64; //MB
 	private static final int DEFAULT_STORAGE_PORT = 2009;
 	private static final int DEFAULT_CLIENT_PORT = 2010;
+	private static final int DEFAULT_BACKUP_PORT = 2011;
+	private static final int DEFAULT_KEEPALIVE_PORT = 2012;
 
-    private static AtomicInteger _storIdCount;
-	private static AtomicInteger _clientIdCount;
+    private static AtomicInteger _idCount;
 	private static int _currStorId;
 	private static Lock _currStorIdLock;
 
 	private static Directory _rootDir;
 	private static ConcurrentHashMap<Integer, StorageNode> _storMap;
 	private static ConcurrentHashMap<Integer, ClientNode> _clientMap;
+    private static BackupNode _backup;
 	
 	private static Worker _worker;
+
+    private static Logger _log;
 	
-	public static void main(String[] args)
-	{
+    public static void initialize()
+    {
+		//TODO: decide what args to send in to master
+
+        setupLogging();
+
+        _log.info("Setting up master...");
+
 		_rootDir = new Directory(null, "");
 		_storMap = new ConcurrentHashMap<Integer, StorageNode>();
 		_clientMap = new ConcurrentHashMap<Integer, ClientNode>();
+        _backup = null;
 		
-		_storIdCount = new AtomicInteger(0);
-		_clientIdCount = new AtomicInteger(0);
+		_idCount = new AtomicInteger(0);
 		_currStorId = 0;
 		_currStorIdLock = new ReentrantLock();
 		
@@ -51,25 +63,53 @@ public class MasterServer
 		
 		Thread storageHandler = new Thread(new StorageHandler(DEFAULT_STORAGE_PORT));
 		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_CLIENT_PORT));
-		
+		Thread backupHandler = new Thread(new ClientHandler(DEFAULT_BACKUP_PORT));
+        Thread kaHandler = new Thread(new KeepAliveHandler(DEFAULT_KEEPALIVE_PORT));
+
+		_log.info("...done.");
+
 		storageHandler.start();
 		clientHandler.start();
-	}
+		backupHandler.start();
+		kaHandler.start();
+
+		_log.info("Ready to accept requests from clients...\n");
+    }
 
     public static int addStorageNode(String ipAddr, int clientPort, int masterPort)
     {
-		int id = _storIdCount.getAndIncrement();
+		int id = _idCount.getAndIncrement();
         _storMap.put(id, new StorageNode(ipAddr, clientPort, masterPort));
+
+		/*Communication resp = _worker.submitRequest(
+								new Communication(
+									Protocol.MB_BACKUP_REQUEST,
+									new MBBackupRequest(
+										TODO: populate)),
+								_backupAddr,
+								_masterPort);*/
+
         return id;
     }
 	
 	public static int addClientNode(String ipAddr, int port)
 	{
-		int id = _clientIdCount.getAndIncrement();
+		int id = _idCount.getAndIncrement();
 		_clientMap.put(id, new ClientNode(ipAddr, port));
         return id;
 	}
-	
+
+	public static int addBackupNode(String ipAddr, int port)
+	{
+        if (_backup == null)
+        {
+            int id = _idCount.getAndIncrement();
+            _backup = new BackupNode(id, ipAddr, port);
+            return id;
+        }
+        return -1;
+	}
+
 	public static Directory makeDirectory(String dirName)
 	{
 		ArrayList<String> dirs = StringUtil.explodeString(dirName);
@@ -83,6 +123,7 @@ public class MasterServer
 	
 	public static boolean removeDirectory(String dirPath)
 	{
+        //TODO: Check dir not empty
 		ArrayList<String> dirs = StringUtil.explodeString(dirPath);
 		Directory currDir = _rootDir;
 		for (int i = 0 ; i < dirs.size()-1 ; i++)
@@ -146,7 +187,7 @@ public class MasterServer
 		{
 			//complicated critical section requiring Lock
 			_currStorIdLock.lock();
-			if (_currStorId > _storIdCount.get())
+			if (_currStorId > _idCount.get())
 				_currStorId = 0;
 			if (_storMap.get(_currStorId) != null)
 				id = _currStorId;
@@ -194,6 +235,11 @@ public class MasterServer
 		return (MSCommitResponse)comm.getPayload();
 	}
 
+    private static void setupLogging()
+    {
+		_log = Logger.getLogger("cs5204.fs.master");
+    }
+
 	private static class StorageNode
 	{
 		private String m_addr;
@@ -232,6 +278,35 @@ public class MasterServer
 		{
 			m_addr = addr;
             m_port = port;
+		}
+	}
+
+	private static class BackupNode
+	{
+        private int m_id;
+		private String m_addr;
+		private int m_port;
+
+		public BackupNode(int id, String addr, int port)
+		{
+            m_id = id;
+			m_addr = addr;
+			m_port = port;
+		}
+		
+		public int getId()
+		{
+			return m_id;
+		}
+		
+		public String getAddress()
+		{
+			return m_addr;
+		}
+		
+		public int getPort()
+		{
+			return m_port;
 		}
 	}
 }

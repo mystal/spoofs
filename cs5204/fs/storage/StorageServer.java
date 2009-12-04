@@ -18,6 +18,7 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.logging.Logger;
 
 public class StorageServer
 {
@@ -35,6 +36,8 @@ public class StorageServer
 	private static AtomicInteger _fileCounter;
 	private static ConcurrentHashMap<String, StorFile> _fileMap;
 
+    private static Logger _log;
+
 	public static void main(String [] args)
 	{
 		if (args.length < 2)
@@ -42,7 +45,9 @@ public class StorageServer
 			System.out.println("Master IP address and port needed");
 			System.exit(0);
 		}
-		
+
+		_log = Logger.getLogger("cs5204.fs.storage");
+
 		//First initiate the contact with the master
 		_masterAddr = args[0];
 		_masterPort = Integer.parseInt(args[1]);
@@ -81,7 +86,7 @@ public class StorageServer
 		masterHandler.start();
 	}
 	
-	public static boolean initiateContact()
+	private static boolean initiateContact()
 	{
 		Communication resp = _worker.submitRequest(
 								new Communication(

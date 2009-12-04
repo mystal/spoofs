@@ -23,7 +23,7 @@ public class KeepAliveHandler extends AbstractHandler
 	
     protected AbstractHandlerTask createHandlerTask(Socket socket, int id)
     {
-        return new MasterHandlerTask(socket, id);
+        return new KeepAliveHandlerTask(socket, id);
     }
 
 	private class KeepAliveHandlerTask extends AbstractHandlerTask

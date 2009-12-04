@@ -7,12 +7,13 @@ import java.io.Serializable;
 public class KAResponse
 {
 	private StatusCode m_status;
-	public KARequest(StatusCode status)
+
+	public KAResponse(StatusCode status)
 	{
 		m_status = status;
 	}
 	
-	public int getStatus()
+	public StatusCode getStatus()
 	{
 		return m_status;
 	}

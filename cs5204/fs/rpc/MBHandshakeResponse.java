@@ -8,11 +8,13 @@ public class MBHandshakeResponse implements Payload
 {
 	private StatusCode m_status;
 	private int m_id;
+	private int m_kaPort;
 	
-	public MBHandshakeResponse(StatusCode status, int id)
+	public MBHandshakeResponse(StatusCode status, int id, int kaPort)
 	{
 		m_status = status;
         m_id = id;
+		m_kaPort = kaPort;
 	}
 	
 	public StatusCode getStatus()
@@ -24,5 +26,10 @@ public class MBHandshakeResponse implements Payload
     {
         return m_id;
     }
+	
+	public int getKAPort()
+	{
+		return m_kaPort;
+	}
 }
 

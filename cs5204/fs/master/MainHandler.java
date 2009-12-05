@@ -134,7 +134,7 @@ public class MainHandler extends AbstractHandler
 					if ((id = MasterServer.addBackupNode(addr, port)) != -1)
 						status = StatusCode.OK;
 					
-					resp = new Communication(Protocol.MB_HANDSHAKE_RESPONSE, new MBHandshakeResponse(status, id));
+					resp = new Communication(Protocol.MB_HANDSHAKE_RESPONSE, new MBHandshakeResponse(status, id, MasterServer.getKAPort()));
 					
 					//TODO: Log
 				} break;

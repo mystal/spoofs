@@ -13,7 +13,7 @@ public class MasterLauncher
             {
                 //Start MasterBackup
                 flag = true;
-                MasterBackup.initialize(args[i+1], args[i+2]);
+                MasterBackup.initialize(args[i+1], Integer.parseInt(args[i+2]));
             }
         }
 

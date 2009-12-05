@@ -4,7 +4,7 @@ import cs5204.fs.common.NodeType;
 
 import java.io.Serializable;
 
-public class KARequest
+public class KARequest implements Payload
 {
 	private int m_id;
 	private NodeType m_type;

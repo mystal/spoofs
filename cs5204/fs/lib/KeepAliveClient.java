@@ -29,7 +29,14 @@ public class KeepAliveClient implements Runnable
 	public void run()
 	{
 		while (pulse())
-			Thread.sleep(KA_INTERVAL);
+		{
+			try {
+				Thread.sleep(KA_INTERVAL);
+			}
+			catch (InterruptedException ex) {
+				//TODO: Log/fail
+			}
+		}
 	}
 	
 	public boolean pulse()

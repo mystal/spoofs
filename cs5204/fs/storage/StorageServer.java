@@ -100,7 +100,7 @@ public class StorageServer
 		
 		if (resp == null)
 			return false;
-			
+				
 		MSHandshakeResponse msResp = (MSHandshakeResponse)resp.getPayload();
 		switch(msResp.getStatus())
 		{

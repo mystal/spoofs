@@ -1,7 +1,14 @@
 package cs5204.fs.master;
 
 import cs5204.fs.lib.Worker;
+import cs5204.fs.lib.KeepAliveClient;
+import cs5204.fs.rpc.Communication;
+import cs5204.fs.rpc.Payload;
+import cs5204.fs.rpc.MBHandshakeRequest;
+import cs5204.fs.rpc.MBHandshakeResponse;
+import cs5204.fs.common.StatusCode;
 import cs5204.fs.common.NodeType;
+import cs5204.fs.common.Protocol;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -24,13 +31,12 @@ public class MasterBackup
 
     private static Worker _worker;
 
-    public static void initialize(String addr, int backupPort, int kaPort)
+    public static void initialize(String addr, int backupPort)
     {
         //TODO: setup internal things, handshake with master, start KA server and backup request handler
 
         _masterAddr = addr;
         _masterBackupPort = backupPort;
-        _masterKeepAlivePort = kaPort;
 
         try {
 		    _ipAddr = InetAddress.getLocalHost().getHostAddress();
@@ -75,7 +81,7 @@ public class MasterBackup
 										_ipAddr, 
 										DEFAULT_MASTER_BACKUP_PORT)),
 								_masterAddr,
-								_masterPort);
+								_masterBackupPort);
 		
 		if (resp == null)
 			return false;
@@ -85,6 +91,7 @@ public class MasterBackup
 		{
 			case OK:
 				_id = mbResp.getId();
+				_masterKeepAlivePort = mbResp.getKAPort();
 				break;
 			case DENIED:
 			default:
@@ -92,5 +99,46 @@ public class MasterBackup
 		}
 		
 		return true;
+	}
+	
+	private static class StorageNode
+	{
+		private String m_addr;
+		private int m_clientPort;
+		private int m_masterPort;
+
+		public StorageNode(String addr, int clientPort, int masterPort)
+		{
+			m_addr = addr;
+            m_clientPort = clientPort;
+			m_masterPort = masterPort;
+		}
+		
+		public String getAddress()
+		{
+			return m_addr;
+		}
+		
+		public int getClientPort()
+		{
+			return m_clientPort;
+		}
+		
+		public int getMasterPort()
+		{
+			return m_masterPort;
+		}
+	}
+	
+	private static class ClientNode
+	{
+		private String m_addr;
+		private int m_port;
+
+		public ClientNode(String addr, int port)
+		{
+			m_addr = addr;
+            m_port = port;
+		}
 	}
 }

@@ -4,7 +4,7 @@ import cs5204.fs.common.StatusCode;
 
 import java.io.Serializable;
 
-public class KAResponse
+public class KAResponse implements Payload
 {
 	private StatusCode m_status;
 

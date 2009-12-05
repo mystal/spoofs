@@ -227,6 +227,11 @@ public class MasterServer
 		return stor.getMasterPort();
 	}
 	
+	public static int getKAPort()
+	{
+		return DEFAULT_KEEPALIVE_PORT;
+	}
+	
 	private static MSCommitResponse sendStorageCommitRequest(int storId, MSCommitRequest req)
 	{
 		Communication comm = null;

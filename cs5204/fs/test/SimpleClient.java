@@ -20,5 +20,10 @@ public class SimpleClient
 			System.out.println("Failed to create /foo");
 			
 		SFile file = Filesystem.createFile("/foo/bar.txt");
+		
+		if (file != null)
+			System.out.println("Success in creating /foo/bar.txt!");
+		else
+			System.out.println("Failed to create /foo/bar.txt");
 	}
 }

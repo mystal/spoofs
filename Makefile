@@ -4,7 +4,7 @@ out = classes
 srcdir = cs5204/fs
 
 client = ${srcdir}/client/Filesystem.java
-masterserver = ${srcdir}/master/MasterServer.java
+masterserver = ${srcdir}/master/MasterLauncher.java
 storageserver = ${srcdir}/storage/StorageServer.java
 test = ${srcdir}/test/SimpleClient.java
 

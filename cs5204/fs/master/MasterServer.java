@@ -46,9 +46,7 @@ public class MasterServer
 	
     public static void initialize()
     {
-		//TODO: decide what args to send in to master
-
-        setupLogging();
+		setupLogging();
 
         _log.info("Setting up master...");
 
@@ -66,23 +64,15 @@ public class MasterServer
 		
 		_worker = new Worker();
 		
-		/*Thread storageHandler = new Thread(new StorageHandler(DEFAULT_STORAGE_PORT));
-		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_CLIENT_PORT));
-		Thread backupHandler = new Thread(new ClientHandler(DEFAULT_BACKUP_PORT));*/
-		
 		Thread mainHandler = new Thread(new MainHandler(DEFAULT_MAIN_PORT));
         Thread kaHandler = new Thread(new KeepAliveHandler(DEFAULT_KEEPALIVE_PORT));
 
 		_log.info("...done.");
-
-		/*storageHandler.start();
-		clientHandler.start();
-		backupHandler.start();*/
 		
 		mainHandler.start();
 		kaHandler.start();
 
-		_log.info("Ready to accept requests from clients...\n");
+		_log.info("Ready to accept requests...\n");
     }
 
     public static int addStorageNode(String ipAddr, int clientPort, int masterPort)
@@ -105,6 +95,15 @@ public class MasterServer
 	{
 		int id = _clientIdCount.getAndIncrement();
 		_clientMap.put(id, new ClientNode(ipAddr, port));
+		
+		/*Communication resp = _worker.submitRequest(
+								new Communication(
+									Protocol.MB_BACKUP_REQUEST,
+									new MBBackupRequest(
+										TODO: populate)),
+								_backupAddr,
+								_masterPort);*/
+		
         return id;
 	}
 

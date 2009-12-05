@@ -16,6 +16,9 @@ import cs5204.fs.lib.Worker;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Logger;
+
 public class Filesystem
 {	
 	private static String _masterAddr;
@@ -26,6 +29,7 @@ public class Filesystem
 	private static final int _port = 3009;
 	private static boolean _connected;
 	private static Worker _worker;
+	private static Logger _log;
 	
 	//TODO: Caching of SFile handles
 
@@ -34,8 +38,11 @@ public class Filesystem
 		Communication comm = null;
 		CMHandshakeResponse resp = null;
 		
-		_worker = new Worker();
+		_log = Logger.getLogger("cs5204.fs.client");
 		
+		_log.info("Setting up Filesystem parameters...");
+		
+		_worker = new Worker();
 		_masterAddr = addr;
 		_masterPort = port;
 		
@@ -46,6 +53,10 @@ public class Filesystem
             //TODO: Log/fail
         }
 		
+		_log.info("Done setting up parameters.");
+		
+		_log.info("Submitting handshake to master at " + _masterAddr + ":" + _masterPort + "...");
+		
 		comm = _worker.submitRequest(
 								new Communication(
 									Protocol.CM_HANDSHAKE_REQUEST, 
@@ -54,7 +65,9 @@ public class Filesystem
 								_masterPort);
 		
 		if (comm == null)
-			//TODO: throw exception
+		{
+			_log.warning("NO COMMUNICATION RECEIVED FROM MASTER!");
+		}
 			
 		resp = (CMHandshakeResponse)comm.getPayload();
 		
@@ -63,15 +76,14 @@ public class Filesystem
 			case OK:
 				_id = resp.getId();
 				_blockSize = resp.getBlockSize();
-				//TODO: Log success
+				_connected = true;
+				_log.info("Successful handshake!  Now connected with id " + _id);
 				break;
 			case DENIED:
 			default:
-				//TODO: Throw exception
+				_log.warning("Request denied");
                 break;
 		}
-		
-		_connected = true;
 		
 		//TODO: Start thread on _port that listens for failover requests from backup
     }

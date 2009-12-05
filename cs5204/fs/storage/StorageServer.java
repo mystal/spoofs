@@ -48,6 +48,8 @@ public class StorageServer
 
 		_log = Logger.getLogger("cs5204.fs.storage");
 
+		_log.info("Setting up storage server parameters..");
+		
 		//First initiate the contact with the master
 		_masterAddr = args[0];
 		_masterPort = Integer.parseInt(args[1]);
@@ -66,18 +68,22 @@ public class StorageServer
             //TODO: Log/fail
         }
 		
+		_log.info("Done initializing storage server.");
+		
+		_log.info("Initiating contact with master...");
+		
 		int attempts = 0;
 		while (!initiateContact())
 		{
-			//TODO: Log failure
 			if(++attempts > MAX_ATTEMPTS)
 			{
-				//TODO: Log max rety reached
+				_log.warning("Max retry attempts reached!");
                 return;
 			}
+			_log.warning("Failed to initiate contact, retrying...");
 		}
 		
-		//TODO: Log successful connection
+		_log.info("Successful connection to master!");
 		
 		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_CLIENT_PORT));
 		Thread masterHandler = new Thread(new MasterHandler(DEFAULT_MASTER_PORT));

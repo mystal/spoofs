@@ -37,7 +37,18 @@ public class BackupHandler extends AbstractHandler
 			{
 				case MB_BACKUP_REQUEST:
 				{					
-					//TODO: Add node to MasterBackup through static methods
+                    MBBackupRequest mbReq = (MBBackupRequest)req;
+                    NodeType type = mbReq.getNodeType();
+                    if (type == NodeType.STORAGE)
+                    {
+                        MasterServer.backupStorageNode(mbReq.getAddress(), mbReq.getPort(), mbReq.getId());
+                    }
+                    else if (type == NodeType.CLIENT)
+                    {
+                        MasterServer.backupClientNode(mbReq.getAddress(), mbReq.getPort(), mbReq.getId());
+                    }
+                    else //Unrecognized type, ignore
+                        break;
 				} break;
 
 				default:

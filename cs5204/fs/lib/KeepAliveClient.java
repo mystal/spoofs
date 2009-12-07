@@ -1,12 +1,12 @@
 package cs5204.fs.lib;
 
+import cs5204.fs.common.NodeType;
+import cs5204.fs.common.Protocol;
+import cs5204.fs.common.StatusCode;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.KARequest;
 import cs5204.fs.rpc.KAResponse;
-import cs5204.fs.common.Protocol;
-import cs5204.fs.common.StatusCode;
-import cs5204.fs.common.NodeType;
 
 public class KeepAliveClient implements Runnable
 {

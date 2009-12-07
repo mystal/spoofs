@@ -40,7 +40,7 @@ public class KeepAliveHandler extends AbstractHandler
 			switch (req.getProtocol())
 			{
 				case KA_REQUEST:
-					//TODO: What?
+					//TODO: What? Have to check something...
 					break;
 				default:
 					//TODO: Log/fail

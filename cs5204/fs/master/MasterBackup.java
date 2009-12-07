@@ -1,14 +1,14 @@
 package cs5204.fs.master;
 
+import cs5204.fs.common.StatusCode;
+import cs5204.fs.common.NodeType;
+import cs5204.fs.common.Protocol;
 import cs5204.fs.lib.Worker;
 import cs5204.fs.lib.KeepAliveClient;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MBHandshakeRequest;
 import cs5204.fs.rpc.MBHandshakeResponse;
-import cs5204.fs.common.StatusCode;
-import cs5204.fs.common.NodeType;
-import cs5204.fs.common.Protocol;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -23,7 +23,7 @@ public class MasterBackup
     private static String _ipAddr;
     private static int _id;
     private static String _masterAddr;
-    private static int _masterBackupPort;
+    private static int _masterMainPort;
     private static int _masterKeepAlivePort;
 
 	private static ConcurrentHashMap<Integer, StorageNode> _storMap;
@@ -31,12 +31,13 @@ public class MasterBackup
 
     private static Worker _worker;
 
-    public static void initialize(String addr, int backupPort)
+    public static void initialize(String addr, int mainPort, int kaPort)
     {
         //TODO: setup internal things, handshake with master, start KA server and backup request handler
 
         _masterAddr = addr;
-        _masterBackupPort = backupPort;
+        _masterMainPort = mainPort;
+        _masterKeepAlivePort = kaPort;
 
         try {
 		    _ipAddr = InetAddress.getLocalHost().getHostAddress();
@@ -63,8 +64,8 @@ public class MasterBackup
 		
 		//TODO: Log successful connection
 
-		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, _id, _masterAddr, _masterKeepAlivePort, _worker));
 		Thread backupHandler = new Thread(new BackupHandler(DEFAULT_MASTER_BACKUP_PORT));
+		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, _id, _masterAddr, _masterKeepAlivePort, _worker));
 
 		kaClient.start();
 		backupHandler.start();
@@ -81,7 +82,7 @@ public class MasterBackup
 										_ipAddr, 
 										DEFAULT_MASTER_BACKUP_PORT)),
 								_masterAddr,
-								_masterBackupPort);
+								_masterMainPort);
 		
 		if (resp == null)
 			return false;
@@ -101,17 +102,29 @@ public class MasterBackup
 		return true;
 	}
 	
+    public static boolean backupStorageNode(String ipAddr, int port, int id)
+    {
+        _storMap.put(id, new StorageNode(ipAddr, port));
+        //TODO: if put fails, return false?
+        return true;
+    }
+	
+	public static boolean backupClientNode(String ipAddr, int port, int id)
+	{
+		_clientMap.put(id, new ClientNode(ipAddr, port));
+        //TODO: if put fails, return false?
+        return true;
+	}
+
 	private static class StorageNode
 	{
 		private String m_addr;
-		private int m_clientPort;
-		private int m_masterPort;
+		private int m_port;
 
-		public StorageNode(String addr, int clientPort, int masterPort)
+		public StorageNode(String addr, int port)
 		{
 			m_addr = addr;
-            m_clientPort = clientPort;
-			m_masterPort = masterPort;
+            m_port = port;
 		}
 		
 		public String getAddress()
@@ -119,14 +132,9 @@ public class MasterBackup
 			return m_addr;
 		}
 		
-		public int getClientPort()
+		public int getPort()
 		{
-			return m_clientPort;
-		}
-		
-		public int getMasterPort()
-		{
-			return m_masterPort;
+			return m_port;
 		}
 	}
 	
@@ -139,6 +147,16 @@ public class MasterBackup
 		{
 			m_addr = addr;
             m_port = port;
+		}
+		
+		public String getAddress()
+		{
+			return m_addr;
+		}
+		
+		public int getPort()
+		{
+			return m_port;
 		}
 	}
 }

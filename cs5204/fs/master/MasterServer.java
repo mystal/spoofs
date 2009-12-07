@@ -75,18 +75,25 @@ public class MasterServer
 		_log.info("Ready to accept requests...\n");
     }
 
-    public static int addStorageNode(String ipAddr, int clientPort, int masterPort)
+    public static int addStorageNode(String ipAddr, int port)
     {
 		int id = _storIdCount.getAndIncrement();
-        _storMap.put(id, new StorageNode(ipAddr, clientPort, masterPort));
+        _storMap.put(id, new StorageNode(ipAddr, port));
 
-		/*Communication resp = _worker.submitRequest(
-								new Communication(
-									Protocol.MB_BACKUP_REQUEST,
-									new MBBackupRequest(
-										TODO: populate)),
-								_backupAddr,
-								_masterPort);*/
+        //Perform backup if a backup server registered
+        if (_backup != null)
+        {
+            Communication resp = _worker.submitRequest(
+                                    new Communication(
+                                        Protocol.MB_BACKUP_REQUEST,
+                                        new MBBackupRequest(
+                                            NodeType.STORAGE,
+                                            ipAddr,
+                                            port,
+                                            id)),
+                                    _backupAddr,
+                                    _masterPort);
+        }
 
         return id;
     }
@@ -96,13 +103,20 @@ public class MasterServer
 		int id = _clientIdCount.getAndIncrement();
 		_clientMap.put(id, new ClientNode(ipAddr, port));
 		
-		/*Communication resp = _worker.submitRequest(
-								new Communication(
-									Protocol.MB_BACKUP_REQUEST,
-									new MBBackupRequest(
-										TODO: populate)),
-								_backupAddr,
-								_masterPort);*/
+        //Perform backup if a backup server registered
+        if (_backup != null)
+        {
+            Communication resp = _worker.submitRequest(
+                                    new Communication(
+                                        Protocol.MB_BACKUP_REQUEST,
+                                        new MBBackupRequest(
+                                            NodeType.CLIENT,
+                                            ipAddr,
+                                            port,
+                                            id)),
+                                    _backupAddr,
+                                    _masterPort);
+        }
 		
         return id;
 	}

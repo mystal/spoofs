@@ -8,11 +8,19 @@ public class MBHandshakeResponse implements Payload
 {
 	private StatusCode m_status;
 	private int m_kaPort;
+	private NodeType[] m_types;
+	private String[] m_addrs;
+    private int[] m_ports;
+	private int[] m_ids;
 	
-	public MBHandshakeResponse(StatusCode status, int kaPort)
+	public MBHandshakeResponse(StatusCode status, int kaPort, NodeType[] types, String[] addrs, int[] ports, int[] ids)
 	{
 		m_status = status;
 		m_kaPort = kaPort;
+        m_types = types;
+        m_addrs = addrs;
+        m_ports = ports;
+        m_ids = ids;
 	}
 	
 	public StatusCode getStatus()
@@ -24,5 +32,25 @@ public class MBHandshakeResponse implements Payload
 	{
 		return m_kaPort;
 	}
+
+    public NodeType[] getTypes()
+    {
+        return m_types;
+    }
+
+    public String[] getAddresses()
+    {
+        return m_addrs;
+    }
+
+    public int[] getPorts()
+    {
+        return m_ports;
+    }
+
+    public int[] getIds()
+    {
+        return m_ids;
+    }
 }
 

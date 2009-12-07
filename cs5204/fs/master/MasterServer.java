@@ -31,6 +31,8 @@ public class MasterServer
 	private static final int DEFAULT_CLIENT_PORT = 2010;
 	private static final int DEFAULT_BACKUP_PORT = 2011;*/
 	private static final int DEFAULT_KEEPALIVE_PORT = 2012;
+    private static final int DEFAULT_STORAGE_LIFE = 2;
+    private static final int DEFAULT_BACKUP_LIFE = 2;
 
     private static AtomicInteger _storIdCount;
 	private static AtomicInteger _clientIdCount;
@@ -266,11 +268,13 @@ public class MasterServer
 	{
 		private String m_addr;
 		private int m_port;
+        private AtomicInteger m_life;
 
 		public StorageNode(String addr, int port)
 		{
 			m_addr = addr;
             m_port = port;
+            m_life = new AtomicInteger(DEFAULT_STORAGE_LIFE);
 		}
 		
 		public String getAddress()
@@ -282,6 +286,16 @@ public class MasterServer
 		{
 			return m_port;
 		}
+		
+		public int getLife()
+		{
+			return m_life.get();
+		}
+
+        public void setLife(int newLife)
+        {
+            m_life.set(newLife);
+        }
 	}
 	
 	private static class ClientNode
@@ -310,11 +324,13 @@ public class MasterServer
 	{
 		private String m_addr;
 		private int m_port;
+        private AtomicInteger m_life;
 
 		public BackupNode(String addr, int port)
 		{
 			m_addr = addr;
 			m_port = port;
+            m_life = DEFAULT_BACKUP_LIFE;
 		}
 		
 		public String getAddress()
@@ -326,5 +342,15 @@ public class MasterServer
 		{
 			return m_port;
 		}
+		
+		public int getLife()
+		{
+			return m_life.get();
+		}
+
+        public void setLife(int newLife)
+        {
+            m_life.set(newLife);
+        }
 	}
 }

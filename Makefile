@@ -25,4 +25,4 @@ test: ${out} ${test}
 
 .PHONY: clean
 clean:
-	rm -r ${out}
+	rm -rf ${out}

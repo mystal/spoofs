@@ -22,8 +22,7 @@ import java.util.logging.Logger;
 
 public class StorageServer
 {
-	private static final int DEFAULT_CLIENT_PORT = 2059;
-	private static final int DEFAULT_MASTER_PORT = 2060;
+	private static final int DEFAULT_MAIN_PORT = 2059;
 	private static final int MAX_ATTEMPTS = 5;
 	
 	private static String _masterAddr;
@@ -85,11 +84,9 @@ public class StorageServer
 		
 		_log.info("Successful connection to master!");
 		
-		Thread clientHandler = new Thread(new ClientHandler(DEFAULT_CLIENT_PORT));
-		Thread masterHandler = new Thread(new MasterHandler(DEFAULT_MASTER_PORT));
+		Thread mainHandler = new Thread(new MainHandler(DEFAULT_MAIN_PORT));
 		
-		clientHandler.start();
-		masterHandler.start();
+		mainHandler.start();
 	}
 	
 	private static boolean initiateContact()
@@ -99,8 +96,7 @@ public class StorageServer
 									Protocol.MS_HANDSHAKE_REQUEST,
 									new MSHandshakeRequest(
 										_ipAddr, 
-										DEFAULT_CLIENT_PORT, 
-										DEFAULT_MASTER_PORT)),
+										DEFAULT_MAIN_PORT)),
 								_masterAddr,
 								_masterPort);
 		
@@ -137,8 +133,7 @@ public class StorageServer
 	
 	public static boolean removeFile(String filename)
 	{
-		//TODO: Implement
-		return false;
+		return _fileMap.remove(filename) != null;
 	}
 	
 	public static boolean writeFile(String filename, byte[] data, int off, int len)

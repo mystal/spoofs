@@ -6,7 +6,9 @@ import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MBHandshakeRequest;
 import cs5204.fs.rpc.MBHandshakeResponse;
+import cs5204.fs.rpc.MBBackupRequest;
 import cs5204.fs.common.Protocol;
+import cs5204.fs.common.NodeType;
 
 import java.net.Socket;
 
@@ -37,15 +39,15 @@ public class BackupHandler extends AbstractHandler
 			{
 				case MB_BACKUP_REQUEST:
 				{					
-                    MBBackupRequest mbReq = (MBBackupRequest)req;
+                    MBBackupRequest mbReq = (MBBackupRequest)req.getPayload();
                     NodeType type = mbReq.getNodeType();
                     if (type == NodeType.STORAGE)
                     {
-                        MasterServer.backupStorageNode(mbReq.getAddress(), mbReq.getPort(), mbReq.getId());
+                        MasterBackup.backupStorageNode(mbReq.getAddress(), mbReq.getPort(), mbReq.getId());
                     }
                     else if (type == NodeType.CLIENT)
                     {
-                        MasterServer.backupClientNode(mbReq.getAddress(), mbReq.getPort(), mbReq.getId());
+                        MasterBackup.backupClientNode(mbReq.getAddress(), mbReq.getPort(), mbReq.getId());
                     }
                     else //Unrecognized type, ignore
                         break;

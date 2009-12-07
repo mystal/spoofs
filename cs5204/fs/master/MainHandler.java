@@ -45,9 +45,13 @@ public class MainHandler extends AbstractHandler
 				case CM_HANDSHAKE_REQUEST:
 				{
 					CMHandshakeRequest cmReq = (CMHandshakeRequest)req.getPayload();
-					int id = MasterServer.addClientNode(cmReq.getIPAddr(), cmReq.getPort());
+					int id = -1;
+					StatusCode status = StatusCode.DENIED;
+					
+					if ((id = MasterServer.addClientNode(cmReq.getIPAddr(), cmReq.getPort())) != -1)
+						status = StatusCode.OK;
+					
 					resp = new Communication(Protocol.CM_HANDSHAKE_RESPONSE, new CMHandshakeResponse(StatusCode.OK, id, MasterServer.BLOCK_SIZE));
-					//TODO: Log success
 				} break;
 				
 				case CM_OPERATION_REQUEST:
@@ -70,7 +74,7 @@ public class MainHandler extends AbstractHandler
 							{
 								status = StatusCode.OK;
 								addr = MasterServer.getStorIPAddress(file.getStorId());
-								port = MasterServer.getStorClientPort(file.getStorId());
+								port = MasterServer.getStorPort(file.getStorId());
 							}
 							break;
 						case MKDIR:
@@ -82,7 +86,7 @@ public class MainHandler extends AbstractHandler
 							{
 								status = StatusCode.OK;
 								addr = MasterServer.getStorIPAddress(file.getStorId());
-								port = MasterServer.getStorClientPort(file.getStorId());								
+								port = MasterServer.getStorPort(file.getStorId());								
 							}
 							break;
 						case CLOSE:
@@ -112,10 +116,9 @@ public class MainHandler extends AbstractHandler
 					StatusCode status = StatusCode.DENIED;
 					int id = -1;
 					String addr = msReq.getIPAddr();
-					int clientPort = msReq.getClientPort();
-					int masterPort = msReq.getMasterPort();
+					int port = msReq.getPort();
 					
-					if ((id = MasterServer.addStorageNode(addr, clientPort, masterPort)) != -1)
+					if ((id = MasterServer.addStorageNode(addr, port)) != -1)
 						status = StatusCode.OK;
 					
 					resp = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, new MSHandshakeResponse(status, id));

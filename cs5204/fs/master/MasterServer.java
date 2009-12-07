@@ -5,11 +5,13 @@ import cs5204.fs.lib.Worker;
 
 import cs5204.fs.rpc.MSCommitRequest;
 import cs5204.fs.rpc.MSCommitResponse;
+import cs5204.fs.rpc.MBBackupRequest;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.common.Protocol;
 import cs5204.fs.common.StatusCode;
 import cs5204.fs.common.FileOperation;
+import cs5204.fs.common.NodeType;
 
 import java.net.InetAddress;
 
@@ -91,8 +93,8 @@ public class MasterServer
                                             ipAddr,
                                             port,
                                             id)),
-                                    _backupAddr,
-                                    _masterPort);
+                                    _backup.getAddress(),
+                                    _backup.getPort());
         }
 
         return id;
@@ -114,8 +116,8 @@ public class MasterServer
                                             ipAddr,
                                             port,
                                             id)),
-                                    _backupAddr,
-                                    _masterPort);
+                                    _backup.getAddress(),
+                                    _backup.getPort());
         }
 		
         return id;
@@ -126,7 +128,7 @@ public class MasterServer
         if (_backup == null)
         {
             int id = 0;//TODO: I don't think we need an ID associated with a Backup node
-            _backup = new BackupNode(id, ipAddr, port);
+            _backup = new BackupNode(ipAddr, port);
             return id;
         }
         return -1;
@@ -226,18 +228,11 @@ public class MasterServer
 		return stor.getAddress();
 	}
 	
-	public static int getStorClientPort(int storId)
+	public static int getStorPort(int storId)
 	{
 		StorageNode stor = _storMap.get(storId);
 		if (stor == null) return -1;
-		return stor.getClientPort();
-	}
-	
-	public static int getStorMasterPort(int storId)
-	{
-		StorageNode stor = _storMap.get(storId);
-		if (stor == null) return -1;
-		return stor.getMasterPort();
+		return stor.getPort();
 	}
 	
 	public static int getKAPort()
@@ -250,7 +245,7 @@ public class MasterServer
 		Communication comm = null;
 		
 		String addr = getStorIPAddress(storId);
-		int port = getStorMasterPort(storId);
+		int port = getStorPort(storId);
 		if (addr == null || addr.length() == 0 || port < 0 || port > 65536)
 			return null;
 		
@@ -270,14 +265,12 @@ public class MasterServer
 	private static class StorageNode
 	{
 		private String m_addr;
-		private int m_clientPort;
-		private int m_masterPort;
+		private int m_port;
 
-		public StorageNode(String addr, int clientPort, int masterPort)
+		public StorageNode(String addr, int port)
 		{
 			m_addr = addr;
-            m_clientPort = clientPort;
-			m_masterPort = masterPort;
+            m_port = port;
 		}
 		
 		public String getAddress()
@@ -285,14 +278,9 @@ public class MasterServer
 			return m_addr;
 		}
 		
-		public int getClientPort()
+		public int getPort()
 		{
-			return m_clientPort;
-		}
-		
-		public int getMasterPort()
-		{
-			return m_masterPort;
+			return m_port;
 		}
 	}
 	
@@ -306,24 +294,27 @@ public class MasterServer
 			m_addr = addr;
             m_port = port;
 		}
+		
+		public String getAddress()
+		{
+			return m_addr;
+		}
+		
+		public int getPort()
+		{
+			return m_port;
+		}
 	}
 
 	private static class BackupNode
 	{
-        private int m_id;
 		private String m_addr;
 		private int m_port;
 
-		public BackupNode(int id, String addr, int port)
+		public BackupNode(String addr, int port)
 		{
-            m_id = id;
 			m_addr = addr;
 			m_port = port;
-		}
-		
-		public int getId()
-		{
-			return m_id;
 		}
 		
 		public String getAddress()

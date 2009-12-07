@@ -5,14 +5,12 @@ import java.io.Serializable;
 public class MSHandshakeRequest implements Payload
 {
 	private String m_ipAddr;
-	private int m_clientPort;
-	private int m_masterPort;
+	private int m_port;
 	
-	public MSHandshakeRequest(String ipAddr, int clientPort, int masterPort)
+	public MSHandshakeRequest(String ipAddr, int port)
 	{
 		m_ipAddr = ipAddr;
-		m_clientPort = clientPort;
-		m_masterPort = masterPort;
+		m_port = port;
 	}
 
 	public String getIPAddr()
@@ -20,13 +18,8 @@ public class MSHandshakeRequest implements Payload
 		return m_ipAddr;
 	}
 	
-	public int getClientPort()
+	public int getPort()
 	{
-		return m_clientPort;
-	}
-	
-	public int getMasterPort()
-	{
-		return m_masterPort;
+		return m_port;
 	}
 }

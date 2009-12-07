@@ -14,7 +14,7 @@ public class MBBackupRequest implements Payload
     private int m_port;
 	private int m_id;
 	
-	public MBBackupRequest(Nodetype type, String addr, int port, int id)
+	public MBBackupRequest(NodeType type, String addr, int port, int id)
 	{
         m_type = type;
         m_addr = addr;

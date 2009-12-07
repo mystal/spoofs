@@ -1,5 +1,6 @@
 package cs5204.fs.rpc;
 
+import cs5204.fs.common.NodeType;
 import cs5204.fs.common.StatusCode;
 
 import java.io.Serializable;

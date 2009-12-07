@@ -330,7 +330,7 @@ public class MasterServer
 		{
 			m_addr = addr;
 			m_port = port;
-            m_life = DEFAULT_BACKUP_LIFE;
+            m_life = new AtomicInteger(DEFAULT_BACKUP_LIFE);
 		}
 		
 		public String getAddress()

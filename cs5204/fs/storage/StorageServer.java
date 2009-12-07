@@ -74,7 +74,7 @@ public class StorageServer
 		int attempts = 0;
 		while (!initiateContact())
 		{
-			if(++attempts > MAX_ATTEMPTS)
+			if(++attempts >= MAX_ATTEMPTS)
 			{
 				_log.warning("Max retry attempts reached!");
                 return;

@@ -14,6 +14,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Logger;
 
 public class MasterBackup
 {
@@ -21,7 +23,6 @@ public class MasterBackup
 	private static final int MAX_ATTEMPTS = 5;
 
     private static String _ipAddr;
-    private static int _id;
     private static String _masterAddr;
     private static int _masterMainPort;
     private static int _masterKeepAlivePort;
@@ -31,13 +32,16 @@ public class MasterBackup
 
     private static Worker _worker;
 
-    public static void initialize(String addr, int mainPort, int kaPort)
+    private static Logger _log;
+
+    public static void initialize(String addr, int mainPort)
     {
-        //TODO: setup internal things, handshake with master, start KA server and backup request handler
+		setupLogging();
+
+        _log.info("Setting up master backup...");
 
         _masterAddr = addr;
         _masterMainPort = mainPort;
-        _masterKeepAlivePort = kaPort;
 
         try {
 		    _ipAddr = InetAddress.getLocalHost().getHostAddress();
@@ -51,26 +55,28 @@ public class MasterBackup
 
         _worker = new Worker();
 
+        _log.info("Connecting to master...");
+
 		int attempts = 0;
 		while (!initiateContact())
 		{
-			//TODO: Log failure
-			if(++attempts > MAX_ATTEMPTS)
+			_log.warning("Failed to connect to master, attempt " + (attempts+1) + "/" + MAX_ATTEMPTS+ "...");
+			if(++attempts >= MAX_ATTEMPTS)
 			{
-				//TODO: Log max rety reached
+                _log.severe("Could not connect to master!");
                 return;
 			}
 		}
 		
-		//TODO: Log successful connection
+        _log.info("Successfully connected to master, starting keep alives and backup handler...");
 
 		Thread backupHandler = new Thread(new BackupHandler(DEFAULT_MASTER_BACKUP_PORT));
-		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, _id, _masterAddr, _masterKeepAlivePort, _worker));
+		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, -1, _masterAddr, _masterKeepAlivePort, _worker));
 
 		kaClient.start();
 		backupHandler.start();
 
-        //TODO: Log started
+		_log.info("Ready to accept requests...\n");
     }
 
 	private static boolean initiateContact()
@@ -91,7 +97,6 @@ public class MasterBackup
 		switch(mbResp.getStatus())
 		{
 			case OK:
-				_id = mbResp.getId();
 				_masterKeepAlivePort = mbResp.getKAPort();
 				break;
 			case DENIED:
@@ -101,11 +106,17 @@ public class MasterBackup
 		
 		return true;
 	}
+
+    private static void setupLogging()
+    {
+		_log = Logger.getLogger("cs5204.fs.master");
+    }
 	
     public static boolean backupStorageNode(String ipAddr, int port, int id)
     {
         _storMap.put(id, new StorageNode(ipAddr, port));
         //TODO: if put fails, return false?
+        _log.info("Backed up a new storage node.");
         return true;
     }
 	
@@ -113,6 +124,7 @@ public class MasterBackup
 	{
 		_clientMap.put(id, new ClientNode(ipAddr, port));
         //TODO: if put fails, return false?
+        _log.info("Backed up a new client node.");
         return true;
 	}
 

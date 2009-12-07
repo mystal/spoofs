@@ -69,7 +69,7 @@ public class MasterServer
 		Thread mainHandler = new Thread(new MainHandler(DEFAULT_MAIN_PORT));
         Thread kaHandler = new Thread(new KeepAliveHandler(DEFAULT_KEEPALIVE_PORT));
 
-		_log.info("...done.");
+		_log.info("...done. Starting handlers...");
 		
 		mainHandler.start();
 		kaHandler.start();

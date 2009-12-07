@@ -9,11 +9,11 @@ public class MasterLauncher
         //Parse arguments
         for (int i = 0; i < args.length; i++)
         {
-            if (args[i].equals("--backup") && (i+3) < args.length)
+            if (args[i].equals("--backup") && (i+2) < args.length)
             {
                 //Start MasterBackup
                 flag = true;
-                MasterBackup.initialize(args[i+1], Integer.parseInt(args[i+2]), Integer.parseInt(args[i+3]));
+                MasterBackup.initialize(args[i+1], Integer.parseInt(args[i+2]));
             }
         }
 

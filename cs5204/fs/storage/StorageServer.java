@@ -5,7 +5,9 @@ import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MSHandshakeRequest;
 import cs5204.fs.rpc.MSHandshakeResponse;
 import cs5204.fs.common.Protocol;
+import cs5204.fs.common.NodeType;
 import cs5204.fs.lib.Worker;
+import cs5204.fs.lib.KeepAliveClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,9 +27,10 @@ public class StorageServer
 	private static final int DEFAULT_MAIN_PORT = 2059;
 	private static final int MAX_ATTEMPTS = 5;
 	
+	private static int _id;
 	private static String _masterAddr;
 	private static int _masterPort;
-	private static int _id;
+	private static int _masterKAPort;
 	private static String _ipAddr;
 	private static Worker _worker;
 	
@@ -85,8 +88,10 @@ public class StorageServer
 		_log.info("Successful connection to master!");
 		
 		Thread mainHandler = new Thread(new MainHandler(DEFAULT_MAIN_PORT));
+		Thread kaClient = new Thread(new KeepAliveClient(NodeType.STORAGE, _id, _masterAddr, _masterKAPort, _worker));
 		
 		mainHandler.start();
+		kaClient.start();
 	}
 	
 	private static boolean initiateContact()
@@ -108,6 +113,7 @@ public class StorageServer
 		{
 			case OK:
 				_id = msResp.getId();
+				_masterKAPort = msResp.getKAPort();
 				break;
 			case DENIED:
 			default:

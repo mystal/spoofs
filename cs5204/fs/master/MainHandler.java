@@ -121,26 +121,34 @@ public class MainHandler extends AbstractHandler
 					if ((id = MasterServer.addStorageNode(addr, port)) != -1)
 						status = StatusCode.OK;
 					
-					resp = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, new MSHandshakeResponse(status, id));
+					resp = new Communication(Protocol.MS_HANDSHAKE_RESPONSE, new MSHandshakeResponse(status, id, MasterServer.getKAPort()));
 					
 					//TODO: Log
 				} break;
 				
 				case MB_HANDSHAKE_REQUEST:
 				{
+					StringBuilder builder = new StringBuilder();
+					builder.append("MBHandshakeRequest detected...\n");
 					MBHandshakeRequest mbReq = (MBHandshakeRequest)req.getPayload();
 					StatusCode status = StatusCode.DENIED;
-					int id = -1;
 					String addr = mbReq.getAddress();
 					int port = mbReq.getPort();
 					
-					if ((id = MasterServer.addBackupNode(addr, port)) != -1)
+					if (MasterServer.addBackupNode(addr, port))
+					{
 						status = StatusCode.OK;
+						builder.append("Backup node added successfully.");
+					}
+					else
+					{
+						builder.append("Backup node failed to add.");
+					}
 					
                     //TODO: send out MBHandshakeResponse with arrays for storage and client nodes
 					resp = new Communication(Protocol.MB_HANDSHAKE_RESPONSE, new MBHandshakeResponse(status, MasterServer.getKAPort(), null, null, null, null));
 					
-					//TODO: Log
+					MasterServer.info(builder.toString());
 				} break;
 
 				default:

@@ -8,11 +8,13 @@ public class MSHandshakeResponse implements Payload
 {
 	private StatusCode m_status;
 	private int m_id;
+	private int m_kaPort;
 	
-	public MSHandshakeResponse(StatusCode status, int id)
+	public MSHandshakeResponse(StatusCode status, int id, int kaPort)
 	{
 		m_status = status;
 		m_id = id;
+		m_kaPort = kaPort;
 	}
 	
 	public StatusCode getStatus()
@@ -23,5 +25,10 @@ public class MSHandshakeResponse implements Payload
 	public int getId()
 	{
 		return m_id;
+	}
+	
+	public int getKAPort()
+	{
+		return m_kaPort;
 	}
 }

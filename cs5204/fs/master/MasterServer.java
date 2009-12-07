@@ -125,15 +125,14 @@ public class MasterServer
         return id;
 	}
 
-	public static int addBackupNode(String ipAddr, int port)
+	public static boolean addBackupNode(String ipAddr, int port)
 	{
         if (_backup == null)
         {
-            int id = 0;//TODO: I don't think we need an ID associated with a Backup node
             _backup = new BackupNode(ipAddr, port);
-            return id;
+            return true;
         }
-        return -1;
+        return false;
 	}
 
 	public static Directory makeDirectory(String dirName)
@@ -240,6 +239,16 @@ public class MasterServer
 	public static int getKAPort()
 	{
 		return DEFAULT_KEEPALIVE_PORT;
+	}
+	
+	public static void info(String msg)
+	{
+		_log.info(msg);
+	}
+	
+	public static void warning(String msg)
+	{
+		_log.warning(msg);
 	}
 	
 	private static MSCommitResponse sendStorageCommitRequest(int storId, MSCommitRequest req)

@@ -19,11 +19,16 @@ public class KeepAliveClient implements Runnable
 	
 	public KeepAliveClient(NodeType type, int id, String addr, int port)
 	{
+		this(type, id, addr, port, 0);
+	}
+	
+	public KeepAliveClient(NodeType type, int id, String addr, int port, int timeout)
+	{
 		m_type = type;
 		m_id = id;
 		m_masterAddr = addr;
 		m_masterPort = port;
-		m_worker = new Worker();
+		m_worker = new Worker(timeout);
 	}
 	
 	public void run()

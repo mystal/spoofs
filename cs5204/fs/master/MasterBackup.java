@@ -23,6 +23,7 @@ public class MasterBackup
 {
 	private static final int DEFAULT_MASTER_BACKUP_PORT = 3059;
 	private static final int MAX_ATTEMPTS = 5;
+	private static final int MASTER_TIMEOUT_ALLOWANCE = 5000;
 
     private static String _ipAddr;
     private static String _masterAddr;
@@ -73,7 +74,7 @@ public class MasterBackup
         _log.info("Successfully connected to master, starting keep alives and backup handler...");
 
 		Thread backupHandler = new Thread(new BackupHandler(DEFAULT_MASTER_BACKUP_PORT));
-		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, -1, _masterAddr, _masterKeepAlivePort));
+		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, -1, _masterAddr, _masterKeepAlivePort, MASTER_TIMEOUT_ALLOWANCE));
 
 		kaClient.start();
 		backupHandler.start();

@@ -41,6 +41,16 @@ public class KeepAliveHandler extends AbstractHandler
 			{
 				case KA_REQUEST:
 					//TODO: What? Have to check something...
+                    KARequest kaReq = (KARequest)req;
+                    NodeType type = req.getNodeType();
+                    if (type == NodeType.STORAGE)
+                    {
+                    }
+                    else if (type == NodeType.BACKUP)
+                    {
+                    }
+                    else
+                        break;
 					break;
 				default:
 					//TODO: Log/fail

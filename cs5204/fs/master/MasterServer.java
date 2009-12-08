@@ -17,8 +17,8 @@ import cs5204.fs.common.BackupOperation;
 import java.net.InetAddress;
 
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -36,6 +36,7 @@ public class MasterServer
 	private static final int DEFAULT_KEEPALIVE_PORT = 2012;
     private static final int DEFAULT_STORAGE_LIFE = 2;
     private static final int DEFAULT_BACKUP_LIFE = 2;
+    private static final int DEFAULT_KEEPALIVE_INTERVAL = 5000;
 
     private static AtomicInteger _storIdCount;
 	private static AtomicInteger _clientIdCount;
@@ -74,11 +75,13 @@ public class MasterServer
 		
 		Thread mainHandler = new Thread(new MainHandler(DEFAULT_MAIN_PORT));
         Thread kaHandler = new Thread(new KeepAliveHandler(DEFAULT_KEEPALIVE_PORT));
+        Thread gcDaemon = new Thread(new GCDaemon());
 
 		_log.info("...done. Starting handlers...");
 		
 		mainHandler.start();
 		kaHandler.start();
+		gcDaemon.start();
 
 		_log.info("Ready to accept requests...\n");
     }
@@ -133,6 +136,38 @@ public class MasterServer
 		return nodes;
 	}
 
+    public static boolean removeStorageNode(int id)
+    {
+        boolean ret = _storMap.remove(id);
+
+        //Perform backup if a backup server registered
+        /*if (_backup != null)
+        {
+            Communication resp = _worker.submitRequest(
+                                    new Communication(
+                                        Protocol.MB_BACKUP_REQUEST,
+                                        new MBBackupRequest(
+                                            NodeType.STORAGE,
+                                            ipAddr,
+                                            port,
+                                            id)),
+                                    _backup.getAddress(),
+                                    _backup.getPort());
+        }*/
+
+        return ret;
+    }
+	
+    public static boolean removeBackupNode()
+    {
+        if (_backup != null)
+        {
+            backup = null;
+            return true;
+        }
+        return false;
+    }
+	
 	public static Directory makeDirectory(String dirName)
 	{
 		ArrayList<String> dirs = StringUtil.explodeString(dirName);
@@ -270,6 +305,21 @@ public class MasterServer
 		_log = Logger.getLogger("cs5204.fs.master");
     }
 
+    private static boolean storCleanup()
+    {
+        Set<Map.Entry<Integer,StorageNode>> storEntries = _storMap.entrySet();
+        for (Map.Entry<Integer,StorageNode> entry: storEntries)
+        {
+            if (entry.getValue().decrementAndGetLife() == 0)
+                MasterServer.removeStorageNode(entry.getKey());
+        }
+        if (_backup != null)
+            if (_backup.decrementAndGetLife() == 0)
+                MasterServer.removeBackupNode();
+
+        return true;
+    }
+
 	private static class StorageNode extends Node
 	{
         private AtomicInteger m_life;
@@ -283,6 +333,11 @@ public class MasterServer
 		public int getLife()
 		{
 			return m_life.get();
+		}
+
+		public int decrementAndGetLife()
+		{
+			return m_life.decrementAndGet();
 		}
 
         public void setLife(int newLife)
@@ -314,11 +369,36 @@ public class MasterServer
 			return m_life.get();
 		}
 
+		public int decrementAndGetLife()
+		{
+			return m_life.decrementAndGet();
+		}
+
         public void setLife(int newLife)
         {
             m_life.set(newLife);
         }
 	}
+
+    private static class GCDaemon implements Runnable
+    {
+        public GCDaemon()
+        {
+        }
+
+        public void run()
+        {
+            while (MasterServer.storCleanup())
+            {
+                try {
+                    Thread.sleep(DEFAULT_KEEPALIVE_INTERVAL);
+                }
+                catch (InterruptedException ex) {
+                    //TODO: Log/Fail
+                }
+            }
+        }
+    }
 	
 	public static void BACKUP_addClientNode(Node node)
 	{

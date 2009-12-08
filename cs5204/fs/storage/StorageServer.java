@@ -8,6 +8,7 @@ import cs5204.fs.common.Protocol;
 import cs5204.fs.common.NodeType;
 import cs5204.fs.lib.Worker;
 import cs5204.fs.lib.KeepAliveClient;
+import cs5204.fs.lib.Node;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,6 +93,8 @@ public class StorageServer
 		
 		mainHandler.start();
 		kaClient.start();
+		
+		//TODO: How to join KA on master failure???
 	}
 	
 	private static boolean initiateContact()
@@ -121,6 +124,11 @@ public class StorageServer
 		}
 		
 		return true;
+	}
+	
+	public static int getId()
+	{
+		return _id;
 	}
 	
 	public static boolean createFile(String filename)
@@ -170,6 +178,32 @@ public class StorageServer
 			return false;
 		}
 		return true;
+	}
+	
+	public static boolean verifyBackup(Node node)
+	{
+		return node.getNodeType() == NodeType.STORAGE &&
+			node.getId() == _id &&
+			node.getAddress() == _ipAddr &&
+			node.getPort() == DEFAULT_MAIN_PORT;
+	}
+	
+	public static void setMaster(String addr, int port, int kaPort)
+	{
+		_masterAddr = addr;
+		_masterPort = port;
+		_masterKAPort = kaPort;
+		
+		//TODO: How to restart KA client???
+	}
+	
+	public static String [] constructRecoveryState()
+	{
+		String [] filenames = new String [_fileMap.size()];
+		int i = 0;
+		for (String name : _fileMap.keySet())
+			filenames[i++] = name;
+		return filenames;
 	}
 	
 	private static class StorFile

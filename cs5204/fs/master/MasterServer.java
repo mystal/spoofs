@@ -504,7 +504,8 @@ public class MasterServer
 						new MSRecoveryRequest(
 							stor,
 							_ipAddr,
-							DEFAULT_MAIN_PORT)),
+							DEFAULT_MAIN_PORT,
+							DEFAULT_KEEPALIVE_PORT)),
 					stor.getAddress(),
 					stor.getPort());
 		}

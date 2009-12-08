@@ -7,12 +7,14 @@ public class MSRecoveryRequest implements Payload
 	private Node m_targetNode;
 	private String m_addr;
 	private int m_port;
+	private int m_kaPort;
 	
-	public MSRecoveryRequest(Node targetNode, String addr, int port)
+	public MSRecoveryRequest(Node targetNode, String addr, int port, int kaPort)
 	{
 		m_targetNode = targetNode;
 		m_addr = addr;
 		m_port = port;
+		m_kaPort = kaPort;
 	}
 	
 	public Node getTargetNode()
@@ -28,5 +30,10 @@ public class MSRecoveryRequest implements Payload
 	public int getPort()
 	{
 		return m_port;
+	}
+	
+	public int getKAPort()
+	{
+		return m_kaPort;
 	}
 }

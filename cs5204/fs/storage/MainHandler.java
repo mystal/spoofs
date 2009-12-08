@@ -10,6 +10,8 @@ import cs5204.fs.rpc.CSOperationRequest;
 import cs5204.fs.rpc.CSOperationResponse;
 import cs5204.fs.rpc.MSCommitRequest;
 import cs5204.fs.rpc.MSCommitResponse;
+import cs5204.fs.rpc.MSRecoveryRequest;
+import cs5204.fs.rpc.MSRecoveryResponse;
 
 import java.net.Socket;
 
@@ -80,8 +82,27 @@ public class MainHandler extends AbstractHandler
 						default:
 							//TODO: Log
 					}
-					resp = new Communication(Protocol.MS_COMMIT_REQUEST, new MSCommitResponse(status));
+					resp = new Communication(Protocol.MS_COMMIT_RESPONSE, new MSCommitResponse(status));
 				} break;
+				
+				case MS_RECOVERY_REQUEST:
+				{
+					MSRecoveryRequest msReq = (MSRecoveryRequest)req.getPayload();
+					
+					StatusCode status = StatusCode.DENIED;
+					int id = -1;
+					String [] filenames = null;
+					
+					if (StorageServer.verifyBackup(msReq.getTargetNode()))
+					{
+						StorageServer.setMaster(msReq.getAddress(), msReq.getPort(), msReq.getKAPort());
+						filenames = StorageServer.constructRecoveryState();
+						id = StorageServer.getId();
+						status = StatusCode.OK;
+					}
+					
+					resp = new Communication(Protocol.MS_RECOVERY_RESPONSE, new MSRecoveryResponse(status, id, filenames));
+				}
 				
 				default:
 					//TODO: Log/fail

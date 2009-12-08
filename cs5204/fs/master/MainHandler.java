@@ -15,6 +15,8 @@ import cs5204.fs.rpc.CMHandshakeRequest;
 import cs5204.fs.rpc.CMHandshakeResponse;
 import cs5204.fs.rpc.CMOperationRequest;
 import cs5204.fs.rpc.CMOperationResponse;
+import cs5204.fs.rpc.CMFootshakeRequest;
+import cs5204.fs.rpc.CMFootshakeResponse;
 import cs5204.fs.rpc.MBHandshakeRequest;
 import cs5204.fs.rpc.MBHandshakeResponse;
 
@@ -115,6 +117,15 @@ public class MainHandler extends AbstractHandler
 					
 				} break;
 				
+				case CM_FOOTSHAKE_REQUEST:
+				{
+					CMFootshakeRequest cmReq = (CMFootshakeRequest)req.getPayload();
+					StatusCode status = StatusCode.DENIED;
+					if (MasterServer.removeClientNode(cmReq.getId()))
+						status = StatusCode.OK;
+					resp = new Communication(Protocol.CM_FOOTSHAKE_RESPONSE, new CMFootshakeResponse(status));
+				}
+				
 				case MS_HANDSHAKE_REQUEST:
 				{
 					MSHandshakeRequest msReq = (MSHandshakeRequest)req.getPayload();
@@ -154,7 +165,6 @@ public class MainHandler extends AbstractHandler
 						builder.append("Backup node failed to add.");
 					}
 					
-                    //TODO: send out MBHandshakeResponse with arrays for storage and client nodes
 					resp = new Communication(Protocol.MB_HANDSHAKE_RESPONSE, new MBHandshakeResponse(status, MasterServer.getKAPort(), objects));
 					
 					MasterServer.info(builder.toString());

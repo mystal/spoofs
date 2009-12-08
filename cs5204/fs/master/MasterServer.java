@@ -36,6 +36,7 @@ public class MasterServer
 	private static final int DEFAULT_KEEPALIVE_PORT = 2012;
     private static final int DEFAULT_STORAGE_LIFE = 2;
     private static final int DEFAULT_BACKUP_LIFE = 2;
+	private static final int DEFAULT_CLIENT_LIFE = 3;
     private static final int DEFAULT_KEEPALIVE_INTERVAL = 5000;
 
     private static AtomicInteger _storIdCount;
@@ -135,34 +136,40 @@ public class MasterServer
 			nodes.add(entry.getValue());
 		return nodes;
 	}
+	
+	public static boolean removeClientNode(int id)
+	{
+		ClientNode clientNode = _clientMap.remove(id);
+		
+		if (clientNode == null)
+			return false;
+
+        //Perform backup if a backup server registered
+        if (_backup != null)
+			_backupWorker.submit(BackupOperation.REMOVE, clientNode);
+
+        return true;
+	}
 
     public static boolean removeStorageNode(int id)
     {
-        boolean ret = _storMap.remove(id);
+		StorageNode storageNode = _storMap.remove(id);
+		
+		if (storageNode == null)
+			return false;
 
         //Perform backup if a backup server registered
-        /*if (_backup != null)
-        {
-            Communication resp = _worker.submitRequest(
-                                    new Communication(
-                                        Protocol.MB_BACKUP_REQUEST,
-                                        new MBBackupRequest(
-                                            NodeType.STORAGE,
-                                            ipAddr,
-                                            port,
-                                            id)),
-                                    _backup.getAddress(),
-                                    _backup.getPort());
-        }*/
+        if (_backup != null)
+			_backupWorker.submit(BackupOperation.REMOVE, storageNode);
 
-        return ret;
+        return true;
     }
 	
     public static boolean removeBackupNode()
     {
         if (_backup != null)
         {
-            backup = null;
+            _backup = null;
             return true;
         }
         return false;
@@ -304,14 +311,50 @@ public class MasterServer
     {
 		_log = Logger.getLogger("cs5204.fs.master");
     }
+	
+	public static boolean processKA(NodeType type, int id)
+	{
+		switch (type)
+		{
+			case STORAGE:
+			{
+				StorageNode stor = _storMap.get(id);
+				if (stor == null)
+					return false;
+				stor.setLife(DEFAULT_STORAGE_LIFE);
+			} break;
+			
+			case CLIENT:
+			{
+				ClientNode cli = _clientMap.get(id);
+				if (cli == null)
+					return false;
+				cli.setLife(DEFAULT_STORAGE_LIFE);
+			} break;
+			
+			case BACKUP:
+				//Nothing;
+				break;
+			
+			default:
+				return false;
+		}
+		return true;
+	}
 
-    private static boolean storCleanup()
+    private static boolean nodeCleanup()
     {
         Set<Map.Entry<Integer,StorageNode>> storEntries = _storMap.entrySet();
+		Set<Map.Entry<Integer,ClientNode>> clientEntries = _clientMap.entrySet();
         for (Map.Entry<Integer,StorageNode> entry: storEntries)
         {
             if (entry.getValue().decrementAndGetLife() == 0)
                 MasterServer.removeStorageNode(entry.getKey());
+        }
+		for (Map.Entry<Integer,ClientNode> entry: clientEntries)
+        {
+            if (entry.getValue().decrementAndGetLife() == 0)
+                MasterServer.removeClientNode(entry.getKey());
         }
         if (_backup != null)
             if (_backup.decrementAndGetLife() == 0)
@@ -348,10 +391,28 @@ public class MasterServer
 	
 	private static class ClientNode extends Node 
 	{
+		private AtomicInteger m_life;
+		
 		public ClientNode(int id, String addr, int port)
 		{
 			super(id, NodeType.CLIENT, addr, port);
+			m_life = new AtomicInteger(DEFAULT_CLIENT_LIFE);
 		}
+		
+		public int getLife()
+		{
+			return m_life.get();
+		}
+
+		public int decrementAndGetLife()
+		{
+			return m_life.decrementAndGet();
+		}
+
+        public void setLife(int newLife)
+        {
+            m_life.set(newLife);
+        }
 	}
 
 	private static class BackupNode extends Node
@@ -388,7 +449,7 @@ public class MasterServer
 
         public void run()
         {
-            while (MasterServer.storCleanup())
+            while (MasterServer.nodeCleanup())
             {
                 try {
                     Thread.sleep(DEFAULT_KEEPALIVE_INTERVAL);
@@ -399,6 +460,11 @@ public class MasterServer
             }
         }
     }
+	
+	public static void BACKUP_suspendKA()
+	{
+		//TODO: implement
+	}
 	
 	public static void BACKUP_addClientNode(Node node)
 	{
@@ -422,6 +488,8 @@ public class MasterServer
 	public static void BACKUP_reconstructFilesystem()
 	{
 		//Make sure that all storage nodes have "reported back"
+		
+		//Go through reconstruction process
 	}
 	
 	public static void BACKUP_broadcastToClient()
@@ -429,5 +497,10 @@ public class MasterServer
 		//Go through all clients
 		
 		//Broadcast new addr, port
+	}
+	
+	public static void BACKUP_resumeKA()
+	{
+		//TODO: Implement
 	}
 }

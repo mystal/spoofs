@@ -8,6 +8,7 @@ import cs5204.fs.rpc.KAResponse;
 import cs5204.fs.common.Protocol;
 import cs5204.fs.common.StatusCode;
 import cs5204.fs.common.FileOperation;
+import cs5204.fs.common.NodeType;
 
 import java.io.IOException;
 
@@ -40,18 +41,13 @@ public class KeepAliveHandler extends AbstractHandler
 			switch (req.getProtocol())
 			{
 				case KA_REQUEST:
-					//TODO: What? Have to check something...
-                    KARequest kaReq = (KARequest)req;
-                    NodeType type = req.getNodeType();
-                    if (type == NodeType.STORAGE)
-                    {
-                    }
-                    else if (type == NodeType.BACKUP)
-                    {
-                    }
-                    else
-                        break;
-					break;
+				{
+                    KARequest kaReq = (KARequest)req.getPayload();
+					StatusCode status = StatusCode.DENIED;
+                    if(MasterServer.processKA(kaReq.getNodeType(), kaReq.getId()))
+						status = StatusCode.OK;
+					resp = new Communication(Protocol.KA_RESPONSE, new KAResponse(status));
+				} break;
 				default:
 					//TODO: Log/fail
 			}

@@ -5,6 +5,7 @@ import cs5204.fs.common.NodeType;
 import cs5204.fs.common.Protocol;
 import cs5204.fs.lib.Worker;
 import cs5204.fs.lib.KeepAliveClient;
+import cs5204.fs.lib.Node;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MBHandshakeRequest;
@@ -27,8 +28,8 @@ public class MasterBackup
     private static int _masterMainPort;
     private static int _masterKeepAlivePort;
 
-	private static ConcurrentHashMap<Integer, StorageNode> _storMap;
-	private static ConcurrentHashMap<Integer, ClientNode> _clientMap;
+	private static ConcurrentHashMap<Integer, Node> _storMap;
+	private static ConcurrentHashMap<Integer, Node> _clientMap;
 
     private static Worker _worker;
 
@@ -50,8 +51,8 @@ public class MasterBackup
             //TODO: Log/fail
         }
 
-		_storMap = new ConcurrentHashMap<Integer, StorageNode>();
-		_clientMap = new ConcurrentHashMap<Integer, ClientNode>();
+		_storMap = new ConcurrentHashMap<Integer, Node>();
+		_clientMap = new ConcurrentHashMap<Integer, Node>();
 
         _worker = new Worker();
 
@@ -112,63 +113,41 @@ public class MasterBackup
 		_log = Logger.getLogger("cs5204.fs.master");
     }
 	
-    public static boolean backupStorageNode(String ipAddr, int port, int id)
-    {
-        _storMap.put(id, new StorageNode(ipAddr, port));
-        //TODO: if put fails, return false?
-        _log.info("Backed up a new storage node.");
-        return true;
-    }
-	
-	public static boolean backupClientNode(String ipAddr, int port, int id)
+	public static void addNode(Node node)
 	{
-		_clientMap.put(id, new ClientNode(ipAddr, port));
-        //TODO: if put fails, return false?
-        _log.info("Backed up a new client node.");
-        return true;
-	}
-
-	private static class StorageNode
-	{
-		private String m_addr;
-		private int m_port;
-
-		public StorageNode(String addr, int port)
+		switch (node.getNodeType())
 		{
-			m_addr = addr;
-            m_port = port;
-		}
-		
-		public String getAddress()
-		{
-			return m_addr;
-		}
-		
-		public int getPort()
-		{
-			return m_port;
+			case STORAGE:
+				_storMap.put(node.getId(), node);
+				_log.info("Backed up a new storage node.");
+				break;
+			case CLIENT:
+				_clientMap.put(node.getId(), node);
+				_log.info("Backed up a new client node.");
+				break;
+			case MASTER:
+			case BACKUP:
+			default:
+				//TODO: Log
 		}
 	}
 	
-	private static class ClientNode
+	public static void removeNode(Node node)
 	{
-		private String m_addr;
-		private int m_port;
-
-		public ClientNode(String addr, int port)
+		switch (node.getNodeType())
 		{
-			m_addr = addr;
-            m_port = port;
-		}
-		
-		public String getAddress()
-		{
-			return m_addr;
-		}
-		
-		public int getPort()
-		{
-			return m_port;
+			case STORAGE:
+				_storMap.remove(node.getId());
+				_log.info("Removed a storage node.");
+				break;
+			case CLIENT:
+				_clientMap.remove(node.getId());
+				_log.info("Removed a client node.");
+				break;
+			case MASTER:
+			case BACKUP:
+			default:
+				//TODO: Log
 		}
 	}
 }

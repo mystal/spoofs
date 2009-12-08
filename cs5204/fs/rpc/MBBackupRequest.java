@@ -1,6 +1,7 @@
 package cs5204.fs.rpc;
 
 import cs5204.fs.common.NodeType;
+import cs5204.fs.lib.BackupObject;
 
 import java.io.Serializable;
 
@@ -9,36 +10,15 @@ import java.io.Serializable;
  */
 public class MBBackupRequest implements Payload
 {
-	private NodeType m_type;
-	private String m_addr;
-    private int m_port;
-	private int m_id;
+	private BackupObject [] m_objects;
 	
-	public MBBackupRequest(NodeType type, String addr, int port, int id)
+	public MBBackupRequest(BackupObject[] objects)
 	{
-        m_type = type;
-        m_addr = addr;
-        m_port = port;
-		m_id = id;
+        m_objects = objects;
 	}
 	
-	public NodeType getNodeType()
+	public BackupObject [] getBackupObjects()
 	{
-		return m_type;
-	}
-	
-	public String getAddress()
-	{
-		return m_addr;
-	}
-	
-	public int getPort()
-	{
-		return m_port;
-	}
-	
-	public int getId()
-	{
-		return m_id;
+		return m_objects;
 	}
 }

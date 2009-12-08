@@ -2,7 +2,7 @@ package cs5204.fs.master;
 
 import cs5204.fs.lib.StringUtil;
 import cs5204.fs.lib.Worker;
-
+import cs5204.fs.lib.Node;
 import cs5204.fs.rpc.MSCommitRequest;
 import cs5204.fs.rpc.MSCommitResponse;
 import cs5204.fs.rpc.MBBackupRequest;
@@ -12,6 +12,7 @@ import cs5204.fs.common.Protocol;
 import cs5204.fs.common.StatusCode;
 import cs5204.fs.common.FileOperation;
 import cs5204.fs.common.NodeType;
+import cs5204.fs.common.BackupOperation;
 
 import java.net.InetAddress;
 
@@ -44,6 +45,7 @@ public class MasterServer
 	private static ConcurrentHashMap<Integer, ClientNode> _clientMap;
     private static BackupNode _backup;
 	
+	private static BackupWorker _backupWorker;
 	private static Worker _worker;
 
     private static Logger _log;
@@ -82,22 +84,12 @@ public class MasterServer
     public static int addStorageNode(String ipAddr, int port)
     {
 		int id = _storIdCount.getAndIncrement();
-        _storMap.put(id, new StorageNode(ipAddr, port));
+		StorageNode storageNode = new StorageNode(id, ipAddr, port);
+        _storMap.put(id, storageNode);
 
         //Perform backup if a backup server registered
         if (_backup != null)
-        {
-            Communication resp = _worker.submitRequest(
-                                    new Communication(
-                                        Protocol.MB_BACKUP_REQUEST,
-                                        new MBBackupRequest(
-                                            NodeType.STORAGE,
-                                            ipAddr,
-                                            port,
-                                            id)),
-                                    _backup.getAddress(),
-                                    _backup.getPort());
-        }
+            _backupWorker.submit(BackupOperation.ADD, storageNode);
 
         return id;
     }
@@ -105,22 +97,12 @@ public class MasterServer
 	public static int addClientNode(String ipAddr, int port)
 	{
 		int id = _clientIdCount.getAndIncrement();
-		_clientMap.put(id, new ClientNode(ipAddr, port));
+		ClientNode clientNode = new ClientNode(id, ipAddr, port);
+		_clientMap.put(id, clientNode);
 		
         //Perform backup if a backup server registered
         if (_backup != null)
-        {
-            Communication resp = _worker.submitRequest(
-                                    new Communication(
-                                        Protocol.MB_BACKUP_REQUEST,
-                                        new MBBackupRequest(
-                                            NodeType.CLIENT,
-                                            ipAddr,
-                                            port,
-                                            id)),
-                                    _backup.getAddress(),
-                                    _backup.getPort());
-        }
+            _backupWorker.submit(BackupOperation.ADD, clientNode);
 		
         return id;
 	}
@@ -129,7 +111,9 @@ public class MasterServer
 	{
         if (_backup == null)
         {
-            _backup = new BackupNode(ipAddr, port);
+            _backup = new BackupNode(0, ipAddr, port);
+			_backupWorker = new BackupWorker(ipAddr, port);
+			_backupWorker.start();
             return true;
         }
         return false;
@@ -148,7 +132,6 @@ public class MasterServer
 	
 	public static boolean removeDirectory(String dirPath)
 	{
-        //TODO: Check dir not empty
 		ArrayList<String> dirs = StringUtil.explodeString(dirPath);
 		Directory currDir = _rootDir;
 		for (int i = 0 ; i < dirs.size()-1 ; i++)
@@ -273,27 +256,14 @@ public class MasterServer
 		_log = Logger.getLogger("cs5204.fs.master");
     }
 
-	private static class StorageNode
+	private static class StorageNode extends Node
 	{
-		private String m_addr;
-		private int m_port;
         private AtomicInteger m_life;
 
-		public StorageNode(String addr, int port)
+		public StorageNode(int id, String addr, int port)
 		{
-			m_addr = addr;
-            m_port = port;
+			super(id, NodeType.STORAGE, addr, port);
             m_life = new AtomicInteger(DEFAULT_STORAGE_LIFE);
-		}
-		
-		public String getAddress()
-		{
-			return m_addr;
-		}
-		
-		public int getPort()
-		{
-			return m_port;
 		}
 		
 		public int getLife()
@@ -307,49 +277,22 @@ public class MasterServer
         }
 	}
 	
-	private static class ClientNode
+	private static class ClientNode extends Node 
 	{
-		private String m_addr;
-		private int m_port;
-
-		public ClientNode(String addr, int port)
+		public ClientNode(int id, String addr, int port)
 		{
-			m_addr = addr;
-            m_port = port;
-		}
-		
-		public String getAddress()
-		{
-			return m_addr;
-		}
-		
-		public int getPort()
-		{
-			return m_port;
+			super(id, NodeType.CLIENT, addr, port);
 		}
 	}
 
-	private static class BackupNode
+	private static class BackupNode extends Node
 	{
-		private String m_addr;
-		private int m_port;
         private AtomicInteger m_life;
 
-		public BackupNode(String addr, int port)
+		public BackupNode(int id, String addr, int port)
 		{
-			m_addr = addr;
-			m_port = port;
+			super(id, NodeType.BACKUP, addr, port);
             m_life = new AtomicInteger(DEFAULT_BACKUP_LIFE);
-		}
-		
-		public String getAddress()
-		{
-			return m_addr;
-		}
-		
-		public int getPort()
-		{
-			return m_port;
 		}
 		
 		public int getLife()

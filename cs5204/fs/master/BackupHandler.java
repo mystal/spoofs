@@ -2,6 +2,8 @@ package cs5204.fs.master;
 
 import cs5204.fs.common.StatusCode;
 import cs5204.fs.lib.AbstractHandler;
+import cs5204.fs.lib.Node;
+import cs5204.fs.lib.BackupObject;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MBHandshakeRequest;
@@ -40,17 +42,21 @@ public class BackupHandler extends AbstractHandler
 				case MB_BACKUP_REQUEST:
 				{					
                     MBBackupRequest mbReq = (MBBackupRequest)req.getPayload();
-                    NodeType type = mbReq.getNodeType();
-                    if (type == NodeType.STORAGE)
-                    {
-                        MasterBackup.backupStorageNode(mbReq.getAddress(), mbReq.getPort(), mbReq.getId());
-                    }
-                    else if (type == NodeType.CLIENT)
-                    {
-                        MasterBackup.backupClientNode(mbReq.getAddress(), mbReq.getPort(), mbReq.getId());
-                    }
-                    else //Unrecognized type, ignore
-                        break;
+					BackupObject [] objects = mbReq.getBackupObjects();
+					for (BackupObject obj : objects)
+					{
+						switch (obj.getBackupOperation())
+						{
+							case ADD:
+								MasterBackup.addNode(obj.getNode());
+								break;
+							case REMOVE:
+								MasterBackup.removeNode(obj.getNode());
+								break;
+							default:
+								//TODO: Log
+						}
+					}
 				} break;
 
 				default:

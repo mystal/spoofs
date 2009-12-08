@@ -132,8 +132,10 @@ public class StorageServer
 			_fileMap.put(filename, sFile);
 		}
 		catch (FileNotFoundException ex) {
+			_log.warning("File: " + filename + " filed to create");
 			return false;
 		}
+		_log.info("File: " + filename + " successfully created as " + localName);
 		return true;
 	}
 	

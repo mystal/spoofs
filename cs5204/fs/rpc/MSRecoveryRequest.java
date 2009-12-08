@@ -22,7 +22,7 @@ public class MSRecoveryRequest implements Payload
 	
 	public String getAddress()
 	{
-		return m_address;
+		return m_addr;
 	}
 	
 	public int getPort()

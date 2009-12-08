@@ -2,9 +2,11 @@ package cs5204.fs.master;
 
 import cs5204.fs.lib.StringUtil;
 import cs5204.fs.lib.Worker;
+import cs5204.fs.lib.OneWayWorker;
 import cs5204.fs.lib.Node;
 import cs5204.fs.rpc.MSCommitRequest;
 import cs5204.fs.rpc.MSCommitResponse;
+import cs5204.fs.rpc.MSRecoveryRequest;
 import cs5204.fs.rpc.MBBackupRequest;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.Communication;
@@ -15,6 +17,7 @@ import cs5204.fs.common.NodeType;
 import cs5204.fs.common.BackupOperation;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -39,6 +42,7 @@ public class MasterServer
 	private static final int DEFAULT_CLIENT_LIFE = 3;
     private static final int DEFAULT_KEEPALIVE_INTERVAL = 5000;
 
+	private static String _ipAddr;
     private static AtomicInteger _storIdCount;
 	private static AtomicInteger _clientIdCount;
 	private static int _currStorId;
@@ -59,6 +63,13 @@ public class MasterServer
 		setupLogging();
 
         _log.info("Setting up master...");
+		
+		try {
+            _ipAddr = InetAddress.getLocalHost().getHostAddress();
+        }
+        catch (UnknownHostException ex) {
+            //TODO: Log/fail
+        }
 
 		_rootDir = new Directory(null, "");
 		_storMap = new ConcurrentHashMap<Integer, StorageNode>();
@@ -365,7 +376,7 @@ public class MasterServer
 
 	private static class StorageNode extends Node
 	{
-        private AtomicInteger m_life;
+        private transient AtomicInteger m_life;
 
 		public StorageNode(int id, String addr, int port)
 		{
@@ -391,7 +402,7 @@ public class MasterServer
 	
 	private static class ClientNode extends Node 
 	{
-		private AtomicInteger m_life;
+		private transient AtomicInteger m_life;
 		
 		public ClientNode(int id, String addr, int port)
 		{
@@ -417,7 +428,7 @@ public class MasterServer
 
 	private static class BackupNode extends Node
 	{
-        private AtomicInteger m_life;
+        private transient AtomicInteger m_life;
 
 		public BackupNode(int id, String addr, int port)
 		{
@@ -478,11 +489,25 @@ public class MasterServer
 	
 	public static void BACKUP_broadcastToStorage()
 	{
-		//TODO: Go through all storage
+		//Create one-way worker to handle outbound request creation
+		OneWayWorker worker = new OneWayWorker();
 		
-		//Broadcast new addr, port via MSRecoveryRequest, receive MSRecoveryResponse
-		
-		//Let MainHandler handle MSReconstructionRequest
+		//Go through all storage nodes
+		for (Integer id : _storMap.keySet())
+		{
+			StorageNode stor = _storMap.get(id);
+			
+			//Submit request to worker to broadcast MSRecoveryRequest
+			worker.submitRequest(
+					new Communication(
+						Protocol.MS_RECOVERY_REQUEST,
+						new MSRecoveryRequest(
+							stor,
+							_ipAddr,
+							DEFAULT_MAIN_PORT)),
+					stor.getAddress(),
+					stor.getPort());
+		}
 	}
 	
 	public static void BACKUP_reconstructFilesystem()

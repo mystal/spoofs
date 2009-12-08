@@ -133,6 +133,7 @@ public class StorageServer
 	
 	public static boolean createFile(String filename)
 	{
+        _log.info("Trying to create file: " + filename);
 		if (_fileMap.get(filename) != null) return false;  //if it already exists
 		String localName = "localfile_" + _fileCounter.getAndIncrement();
 		try {
@@ -140,7 +141,7 @@ public class StorageServer
 			_fileMap.put(filename, sFile);
 		}
 		catch (FileNotFoundException ex) {
-			_log.warning("File: " + filename + " filed to create");
+			_log.warning("File: " + filename + " failed to create");
 			return false;
 		}
 		_log.info("File: " + filename + " successfully created as " + localName);
@@ -149,34 +150,39 @@ public class StorageServer
 	
 	public static boolean removeFile(String filename)
 	{
+        _log.info("Trying to remove file: " + filename);
 		return _fileMap.remove(filename) != null;
 	}
 	
 	public static boolean writeFile(String filename, byte[] data, int off, int len)
 	{
+        _log.info("Trying to write " + len + " bytes at " + off + " in file: " + filename);
 		StorFile file = _fileMap.get(filename);
 		if (file == null) return false;
 		try {
 			file.write(data, off, len);
 		}
 		catch (IOException ex) {
-			//TODO: Log
+			_log.warning("Could not complete write!");
 			return false;
 		}
+        _log.info("Write complete.");
 		return true;
 	}
 	
 	public static boolean readFile(String filename, byte[] data, int off, int len)
 	{
+        _log.info("Trying to read " + len + " bytes at " + off + " in file: " + filename);
 		StorFile file = _fileMap.get(filename);
 		if (file == null) return false;
 		try {
 			file.read(data, off, len);
 		}
 		catch (IOException ex) {
-			//TODO: Log
+			_log.warning("Could not complete read!");
 			return false;
 		}
+        _log.info("Read complete.");
 		return true;
 	}
 	
@@ -190,6 +196,7 @@ public class StorageServer
 	
 	public static void setMaster(String addr, int port, int kaPort)
 	{
+        _log.info("Setting master to " + addr + " (" + port + ", " + kaPort + ").");
 		_masterAddr = addr;
 		_masterPort = port;
 		_masterKAPort = kaPort;
@@ -204,6 +211,16 @@ public class StorageServer
 		for (String name : _fileMap.keySet())
 			filenames[i++] = name;
 		return filenames;
+	}
+	
+	public static void info(String msg)
+	{
+		_log.info(msg);
+	}
+	
+	public static void warning(String msg)
+	{
+		_log.warning(msg);
 	}
 	
 	private static class StorFile

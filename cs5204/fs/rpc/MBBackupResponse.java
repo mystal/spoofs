@@ -4,7 +4,7 @@ import cs5204.fs.common.StatusCode;
 
 import java.io.Serializable;
 
-public class MBBackupResponse
+public class MBBackupResponse implements Payload
 {
 	private StatusCode m_status;
 	

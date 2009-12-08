@@ -14,7 +14,7 @@ import cs5204.fs.rpc.MBBackupResponse;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class BackupWorker extends Thread
+public class BackupWorker implements Runnable
 {
 	private Worker m_worker;
 	private static int DEFAULT_INTERVAL = 10000;

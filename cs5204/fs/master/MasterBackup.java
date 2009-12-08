@@ -133,6 +133,11 @@ public class MasterBackup
 		_log = Logger.getLogger("cs5204.fs.master");
     }
 	
+	public static void info(String str)
+	{
+		_log.info(str);
+	}
+	
 	public static void addNode(Node node)
 	{
 		switch (node.getNodeType())

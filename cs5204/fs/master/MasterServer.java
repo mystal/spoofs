@@ -114,7 +114,7 @@ public class MasterServer
 
         //Perform backup if a backup server registered
         if (_backup != null)
-            _backupWorker.submit(BackupOperation.ADD, storageNode);
+            _backupWorker.submit(BackupOperation.ADD, new Node(storageNode.getId(), NodeType.STORAGE, storageNode.getAddress(), storageNode.getPort()));
 
         return id;
     }
@@ -127,7 +127,7 @@ public class MasterServer
 		
         //Perform backup if a backup server registered
         if (_backup != null)
-            _backupWorker.submit(BackupOperation.ADD, clientNode);
+            _backupWorker.submit(BackupOperation.ADD, new Node(clientNode.getId(), NodeType.CLIENT, clientNode.getAddress(), clientNode.getPort()));
 		
         return id;
 	}
@@ -138,7 +138,7 @@ public class MasterServer
         {
             _backup = new BackupNode(0, ipAddr, port);
 			_backupWorker = new BackupWorker(ipAddr, port);
-			_backupWorker.start();
+			new Thread(_backupWorker).start();
             return true;
         }
         return false;
@@ -165,7 +165,7 @@ public class MasterServer
 
         //Perform backup if a backup server registered
         if (_backup != null)
-			_backupWorker.submit(BackupOperation.REMOVE, clientNode);
+			_backupWorker.submit(BackupOperation.REMOVE, new Node(clientNode.getId(), NodeType.CLIENT, clientNode.getAddress(), clientNode.getPort()));
 
         return true;
 	}
@@ -179,7 +179,7 @@ public class MasterServer
 
         //Perform backup if a backup server registered
         if (_backup != null)
-			_backupWorker.submit(BackupOperation.REMOVE, storageNode);
+			_backupWorker.submit(BackupOperation.REMOVE, new Node(storageNode.getId(), NodeType.STORAGE, storageNode.getAddress(), storageNode.getPort()));
 
         return true;
     }
@@ -558,7 +558,8 @@ public class MasterServer
 				continue;
 			}
 		}
-		//Note - this is a terrible implementation because we need to make sure that clients are not dead.
+		//Note - this is a terrible implementation because we need to make sure that stors are not dead,
+		//or that the data we got was not stale...nevertheless this will have to suffice
 	}
 	
 	public static void BACKUP_broadcastToClient()

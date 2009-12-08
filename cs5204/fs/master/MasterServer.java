@@ -23,7 +23,9 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.ConsoleHandler;
@@ -53,8 +55,11 @@ public class MasterServer
 	private static ConcurrentHashMap<Integer, ClientNode> _clientMap;
     private static BackupNode _backup;
 	
+	private static ConcurrentLinkedQueue<Integer> _tempRecoveryList;
+	
 	private static BackupWorker _backupWorker;
 	private static Worker _worker;
+	private static AtomicBoolean _performKA;
 
     private static Logger _log;
 	
@@ -75,6 +80,9 @@ public class MasterServer
 		_storMap = new ConcurrentHashMap<Integer, StorageNode>();
 		_clientMap = new ConcurrentHashMap<Integer, ClientNode>();
         _backup = null;
+		_performKA = new AtomicBoolean(true);
+		
+		_tempRecoveryList = new ConcurrentLinkedQueue<Integer>();
 		
 		/* NOTE - The storId needs to increment independent of clientId
 					because it is assigned in a round-robin fashion to hold files */
@@ -355,22 +363,24 @@ public class MasterServer
 
     private static boolean nodeCleanup()
     {
-        Set<Map.Entry<Integer,StorageNode>> storEntries = _storMap.entrySet();
-		Set<Map.Entry<Integer,ClientNode>> clientEntries = _clientMap.entrySet();
-        for (Map.Entry<Integer,StorageNode> entry: storEntries)
-        {
-            if (entry.getValue().decrementAndGetLife() == 0)
-                MasterServer.removeStorageNode(entry.getKey());
-        }
-		for (Map.Entry<Integer,ClientNode> entry: clientEntries)
-        {
-            if (entry.getValue().decrementAndGetLife() == 0)
-                MasterServer.removeClientNode(entry.getKey());
-        }
-        if (_backup != null)
-            if (_backup.decrementAndGetLife() == 0)
-                MasterServer.removeBackupNode();
-
+		if (_performKA.get())
+		{
+			Set<Map.Entry<Integer,StorageNode>> storEntries = _storMap.entrySet();
+			Set<Map.Entry<Integer,ClientNode>> clientEntries = _clientMap.entrySet();
+			for (Map.Entry<Integer,StorageNode> entry: storEntries)
+			{
+				if (entry.getValue().decrementAndGetLife() == 0)
+					MasterServer.removeStorageNode(entry.getKey());
+			}
+			for (Map.Entry<Integer,ClientNode> entry: clientEntries)
+			{
+				if (entry.getValue().decrementAndGetLife() == 0)
+					MasterServer.removeClientNode(entry.getKey());
+			}
+			if (_backup != null)
+				if (_backup.decrementAndGetLife() == 0)
+					MasterServer.removeBackupNode();
+		}
         return true;
     }
 
@@ -474,7 +484,7 @@ public class MasterServer
 	
 	public static void BACKUP_suspendKA()
 	{
-		//TODO: implement
+		_performKA.set(false);
 	}
 	
 	public static void BACKUP_addClientNode(Node node)
@@ -489,6 +499,9 @@ public class MasterServer
 	
 	public static void BACKUP_broadcastToStorage()
 	{
+		//Initialize our recovery list
+		_tempRecoveryList = new ConcurrentLinkedQueue<Integer>();;
+		
 		//Create one-way worker to handle outbound request creation
 		OneWayWorker worker = new OneWayWorker();
 		
@@ -511,11 +524,41 @@ public class MasterServer
 		}
 	}
 	
+	public static void submitRecovery(int id, String [] filenames)
+	{
+		//Goes through the reconstruction process
+		for (String name : filenames)
+		{
+			ArrayList<String> tokens = StringUtil.explodeString(name);
+			Directory currDir = _rootDir;
+			for (int i = 0 ; i < tokens.size()-1 ; i++)
+			{
+				Directory tempDir = currDir.getDirectory(tokens.get(i));
+				if (tempDir == null)
+					currDir = currDir.addDirectory(tokens.get(i));
+				else
+					currDir = tempDir;
+			}
+			if (currDir.getFile(tokens.get(tokens.size()-1)) == null)
+				currDir.addFile(tokens.get(tokens.size()-1), id);
+		}
+		
+		_tempRecoveryList.add(id);
+	}
+	
 	public static void BACKUP_reconstructFilesystem()
 	{
 		//Make sure that all storage nodes have "reported back"
-		
-		//Go through reconstruction process
+		while (_tempRecoveryList.size() != _storMap.size())
+		{
+			try {
+				Thread.sleep(1000);
+			}
+			catch(InterruptedException ex) {
+				continue;
+			}
+		}
+		//Note - this is a terrible implementation because we need to make sure that clients are not dead.
 	}
 	
 	public static void BACKUP_broadcastToClient()
@@ -527,6 +570,6 @@ public class MasterServer
 	
 	public static void BACKUP_resumeKA()
 	{
-		//TODO: Implement
+		_performKA.set(true);
 	}
 }

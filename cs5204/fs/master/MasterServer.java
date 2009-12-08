@@ -319,4 +319,35 @@ public class MasterServer
             m_life.set(newLife);
         }
 	}
+	
+	public static void BACKUP_addClientNode(Node node)
+	{
+		_clientMap.put(node.getId(), new ClientNode(node.getId(), node.getAddress(), node.getPort()));
+	}
+	
+	public static void BACKUP_addStorageNode(Node node)
+	{
+		_storMap.put(node.getId(), new StorageNode(node.getId(), node.getAddress(), node.getPort()));
+	}
+	
+	public static void BACKUP_broadcastToStorage()
+	{
+		//TODO: Go through all storage
+		
+		//Broadcast new addr, port via MSRecoveryRequest, receive MSRecoveryResponse
+		
+		//Let MainHandler handle MSReconstructionRequest
+	}
+	
+	public static void BACKUP_reconstructFilesystem()
+	{
+		//Make sure that all storage nodes have "reported back"
+	}
+	
+	public static void BACKUP_broadcastToClient()
+	{
+		//Go through all clients
+		
+		//Broadcast new addr, port
+	}
 }

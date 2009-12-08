@@ -85,6 +85,7 @@ public class Filesystem
                 break;
 		}
 		
+		//TODO: Start KA client
 		//TODO: Start thread on _port that listens for failover requests from backup
     }
 	

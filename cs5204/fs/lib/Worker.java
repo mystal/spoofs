@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,8 +31,14 @@ public class Worker
 	
 	private ExecutorService m_exec;
 	private AtomicInteger m_counter;
+	private int m_timeout;
 	
 	public Worker()
+	{
+		this(0);
+	}
+	
+	public Worker(int timeout)
 	{
 		m_exec = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
 					KEEP_ALIVE_TIME, TimeUnit.SECONDS, 
@@ -42,7 +49,7 @@ public class Worker
 	public Communication submitRequest(Communication req, String addr, int port)
 	{
 		int count = m_counter.getAndIncrement();
-		WorkerTask task = new WorkerTask(req, new InetSocketAddress(addr, port), count);
+		WorkerTask task = new WorkerTask(req, new InetSocketAddress(addr, port), count, m_timeout);
 		try {
 			m_exec.submit(task).get();
 		}
@@ -63,13 +70,15 @@ public class Worker
 		private Communication m_resp;
 		private SocketAddress m_socketAddress;
 		private int m_id;
+		private int m_soTimeout;
 		
-		public WorkerTask(Communication req, SocketAddress socketAddress, int id)
+		public WorkerTask(Communication req, SocketAddress socketAddress, int id, int timeout)
 		{
 			m_req = req;
 			m_resp = null;
 			m_socketAddress = socketAddress;
 			m_id = id;
+			m_soTimeout = timeout;
 		}
 		
 		public void run()
@@ -80,6 +89,8 @@ public class Worker
 			
 			try {
 				sock = new Socket();
+				if (m_soTimeout != 0)
+					sock.setSoTimeout(m_soTimeout);
 				sock.connect(m_socketAddress);
 				
 				oos = new ObjectOutputStream(sock.getOutputStream());
@@ -88,6 +99,10 @@ public class Worker
 				
 				ois = new ObjectInputStream(sock.getInputStream());
 				m_resp = (Communication)ois.readObject();
+			}
+			catch (SocketTimeoutException ex) {
+				//TODO: Log
+				m_resp = null;
 			}
 			catch (IOException ex) {
 				//TODO: log/fail

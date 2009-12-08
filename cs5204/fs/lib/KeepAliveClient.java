@@ -17,13 +17,13 @@ public class KeepAliveClient implements Runnable
 	private int m_masterPort;
 	private Worker m_worker;
 	
-	public KeepAliveClient(NodeType type, int id, String addr, int port, Worker worker)
+	public KeepAliveClient(NodeType type, int id, String addr, int port)
 	{
 		m_type = type;
 		m_id = id;
 		m_masterAddr = addr;
 		m_masterPort = port;
-		m_worker = worker;
+		m_worker = new Worker();
 	}
 	
 	public void run()

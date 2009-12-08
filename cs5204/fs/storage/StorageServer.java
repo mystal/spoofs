@@ -88,7 +88,7 @@ public class StorageServer
 		_log.info("Successful connection to master!");
 		
 		Thread mainHandler = new Thread(new MainHandler(DEFAULT_MAIN_PORT));
-		Thread kaClient = new Thread(new KeepAliveClient(NodeType.STORAGE, _id, _masterAddr, _masterKAPort, _worker));
+		Thread kaClient = new Thread(new KeepAliveClient(NodeType.STORAGE, _id, _masterAddr, _masterKAPort));
 		
 		mainHandler.start();
 		kaClient.start();

@@ -73,12 +73,25 @@ public class MasterBackup
         _log.info("Successfully connected to master, starting keep alives and backup handler...");
 
 		Thread backupHandler = new Thread(new BackupHandler(DEFAULT_MASTER_BACKUP_PORT));
-		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, -1, _masterAddr, _masterKeepAlivePort, _worker));
+		Thread kaClient = new Thread(new KeepAliveClient(NodeType.BACKUP, -1, _masterAddr, _masterKeepAlivePort));
 
 		kaClient.start();
 		backupHandler.start();
 
 		_log.info("Ready to accept requests...\n");
+		
+		/* When this returns, it means that we have received a SocketTimeoutException from the Master...it is dead */
+		try {
+			kaClient.join();
+		}
+		catch (InterruptedException ex) {
+			//TODO: Log/fail
+		}
+		
+		//TODO: How to clean up backupHandler????
+		
+		//Now we go into recovery mode
+		recover();
     }
 
 	private static boolean initiateContact()
@@ -155,5 +168,32 @@ public class MasterBackup
 			default:
 				//TODO: Log
 		}
+	}
+
+	public static void recover()
+	{
+		//Initialize the MasterServer
+		MasterServer.initialize();
+		
+		//TODO: suspend KA checking on Master
+		
+		//Populate the master with our nodes
+		for (Integer i : _clientMap.keySet())
+			MasterServer.BACKUP_addClientNode(_clientMap.get(i));
+		for (Integer i : _storMap.keySet())
+			MasterServer.BACKUP_addStorageNode(_storMap.get(i));
+		
+		//Broadcast our existence to storage nodes
+		MasterServer.BACKUP_broadcastToStorage();
+		
+		//Reconstruct file system
+		MasterServer.BACKUP_reconstructFilesystem();
+		
+		//Broadcast to clients
+		MasterServer.BACKUP_broadcastToClient();
+		
+		//TODO: re-enable KA checking on Master
+		
+		//My work here is done...
 	}
 }

@@ -95,19 +95,23 @@ public abstract class AbstractHandler implements Runnable
 			}
 			
 			resp = processRequest(req);
-				
-			try {
-				oos = new ObjectOutputStream(m_mySocket.getOutputStream());
-				oos.writeObject(resp);
-				oos.flush();
-			}
-			catch (IOException ex) {
-				//TODO: Log/fail
+			
+			if (resp != null)
+			{
+				try {
+					oos = new ObjectOutputStream(m_mySocket.getOutputStream());
+					oos.writeObject(resp);
+					oos.flush();
+				}
+				catch (IOException ex) {
+					//TODO: Log/fail
+				}
 			}
 			
 			try {
 				ois.close();
-				oos.close();
+				if (oos != null)
+					oos.close();
 				m_mySocket.close();
 			}
 			catch (IOException ex) {

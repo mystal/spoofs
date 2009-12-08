@@ -99,9 +99,21 @@ public class MainHandler extends AbstractHandler
 						filenames = StorageServer.constructRecoveryState();
 						id = StorageServer.getId();
 						status = StatusCode.OK;
+						
+						
+						OneWayWorker worker = new OneWayWorker();
+						worker.submitRequest(
+								new Communication(
+									Protocol.MS_RECOVERY_RESPONSE, 
+									new MSRecoveryResponse(
+										status, 
+										id, 
+										filenames)),
+								msReq.getAddress(),
+								msReq.getPort());
 					}
 					
-					resp = new Communication(Protocol.MS_RECOVERY_RESPONSE, new MSRecoveryResponse(status, id, filenames));
+					resp = null;
 				}
 				
 				default:

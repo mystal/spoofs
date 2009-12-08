@@ -3,7 +3,10 @@ package cs5204.fs.master;
 import cs5204.fs.common.Protocol;
 import cs5204.fs.common.StatusCode;
 import cs5204.fs.common.FileOperation;
+import cs5204.fs.common.BackupOperation;
 import cs5204.fs.lib.AbstractHandler;
+import cs5204.fs.lib.Node;
+import cs5204.fs.lib.BackupObject;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MSHandshakeRequest;
@@ -16,6 +19,8 @@ import cs5204.fs.rpc.MBHandshakeRequest;
 import cs5204.fs.rpc.MBHandshakeResponse;
 
 import java.net.Socket;
+
+import java.util.ArrayList;
 
 public class MainHandler extends AbstractHandler
 {
@@ -134,6 +139,10 @@ public class MainHandler extends AbstractHandler
 					StatusCode status = StatusCode.DENIED;
 					String addr = mbReq.getAddress();
 					int port = mbReq.getPort();
+					ArrayList<Node> nodes = MasterServer.getCurrentNodes();
+					BackupObject [] objects = new BackupObject[nodes.size()];
+					for (int i = 0 ; i < nodes.size() ; i++)
+						objects[i] = new BackupObject(BackupOperation.ADD, nodes.get(i));
 					
 					if (MasterServer.addBackupNode(addr, port))
 					{
@@ -146,7 +155,7 @@ public class MainHandler extends AbstractHandler
 					}
 					
                     //TODO: send out MBHandshakeResponse with arrays for storage and client nodes
-					resp = new Communication(Protocol.MB_HANDSHAKE_RESPONSE, new MBHandshakeResponse(status, MasterServer.getKAPort(), null, null, null, null));
+					resp = new Communication(Protocol.MB_HANDSHAKE_RESPONSE, new MBHandshakeResponse(status, MasterServer.getKAPort(), objects));
 					
 					MasterServer.info(builder.toString());
 				} break;

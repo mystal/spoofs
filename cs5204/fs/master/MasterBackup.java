@@ -6,6 +6,7 @@ import cs5204.fs.common.Protocol;
 import cs5204.fs.lib.Worker;
 import cs5204.fs.lib.KeepAliveClient;
 import cs5204.fs.lib.Node;
+import cs5204.fs.lib.BackupObject;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MBHandshakeRequest;
@@ -99,6 +100,11 @@ public class MasterBackup
 		{
 			case OK:
 				_masterKeepAlivePort = mbResp.getKAPort();
+				if (mbResp.getBackupObjects() != null)
+				{
+					for (BackupObject obj : mbResp.getBackupObjects())
+						addNode(obj.getNode());
+				}
 				break;
 			case DENIED:
 			default:

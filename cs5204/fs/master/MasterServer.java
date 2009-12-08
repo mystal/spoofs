@@ -17,6 +17,8 @@ import cs5204.fs.common.BackupOperation;
 import java.net.InetAddress;
 
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -117,6 +119,18 @@ public class MasterServer
             return true;
         }
         return false;
+	}
+	
+	public static ArrayList<Node> getCurrentNodes()
+	{
+		ArrayList<Node> nodes = new ArrayList<Node>();
+		Set<Map.Entry<Integer, ClientNode>> clients = _clientMap.entrySet();
+		Set<Map.Entry<Integer, StorageNode>> storages = _storMap.entrySet();
+		for (Map.Entry<Integer, ClientNode> entry : clients)
+			nodes.add(entry.getValue());
+		for (Map.Entry<Integer, StorageNode> entry : storages)
+			nodes.add(entry.getValue());
+		return nodes;
 	}
 
 	public static Directory makeDirectory(String dirName)

@@ -10,9 +10,9 @@ public class SimpleClient
         SClient client = new SClient("localhost", 2009);
 
         if (client.connect())
-            System.out.println("Client ocnnected.");
+            System.out.println("Client connected.");
         else
-			System.out.println("NOOOOO!!!!\n" + ex);
+			System.out.println("Connecting client failed! NOOOO!!!");
 		
 		if(client.createDirectory("/foo"))
 			System.out.println("Success in creating directory /foo!");

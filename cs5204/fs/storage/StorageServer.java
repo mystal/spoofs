@@ -27,11 +27,13 @@ public class StorageServer
 {
 	private static final int DEFAULT_MAIN_PORT = 2059;
 	private static final int MAX_ATTEMPTS = 5;
+	private static final int DEFAULT_MASTER_KA_TIMEOUT = 3000;
 	
 	private static int _id;
 	private static String _masterAddr;
 	private static int _masterPort;
 	private static int _masterKAPort;
+	private static Thread _kaThread;
 	private static String _ipAddr;
 	private static Worker _worker;
 	
@@ -89,12 +91,10 @@ public class StorageServer
 		_log.info("Successful connection to master!");
 		
 		Thread mainHandler = new Thread(new MainHandler(DEFAULT_MAIN_PORT));
-		Thread kaClient = new Thread(new KeepAliveClient(NodeType.STORAGE, _id, _masterAddr, _masterKAPort));
+		_kaThread = new Thread(new KeepAliveClient(NodeType.STORAGE, _id, _masterAddr, _masterKAPort, DEFAULT_MASTER_KA_TIMEOUT));
 		
 		mainHandler.start();
-		kaClient.start();
-		
-		//TODO: How to join KA on master failure???
+		_kaThread.start();
 	}
 	
 	private static boolean initiateContact()
@@ -188,9 +188,11 @@ public class StorageServer
 	
 	public static boolean verifyBackup(Node node)
 	{
+		_log.info(node.getNodeType() + " " + node.getId() + " " + node.getAddress() + " " + node.getPort());
+		_log.info(NodeType.STORAGE + " " + _id + " " + _ipAddr + " " + DEFAULT_MAIN_PORT);
 		return node.getNodeType() == NodeType.STORAGE &&
 			node.getId() == _id &&
-			node.getAddress() == _ipAddr &&
+			node.getAddress().equals(_ipAddr) &&
 			node.getPort() == DEFAULT_MAIN_PORT;
 	}
 	
@@ -200,8 +202,6 @@ public class StorageServer
 		_masterAddr = addr;
 		_masterPort = port;
 		_masterKAPort = kaPort;
-		
-		//TODO: How to restart KA client???
 	}
 	
 	public static String [] constructRecoveryState()
@@ -211,6 +211,24 @@ public class StorageServer
 		for (String name : _fileMap.keySet())
 			filenames[i++] = name;
 		return filenames;
+	}
+	
+	public static void stopKA()
+	{
+		_log.info("Attempting to stop the KA Thread");
+		try {
+			_kaThread.join();
+		}
+		catch (InterruptedException ex) {
+			//TODO: repeat?
+		}
+		_log.info("KA Thread stopped");
+	}
+	
+	public static void startKA()
+	{
+		_kaThread = new Thread(new KeepAliveClient(NodeType.STORAGE, _id, _masterAddr, _masterKAPort, DEFAULT_MASTER_KA_TIMEOUT));
+		_kaThread.start();
 	}
 	
 	public static void info(String msg)

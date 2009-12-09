@@ -39,7 +39,7 @@ public class MainHandler extends AbstractHandler
 		{
 			Communication resp = null;
 			
-			switch (resp.getProtocol())
+			switch (req.getProtocol())
 			{
 				case CS_OPERATION_REQUEST:
 				{
@@ -101,30 +101,20 @@ public class MainHandler extends AbstractHandler
 					int id = -1;
 					String [] filenames = null;
 					
-                    StorageServer.info("Verifying backup node...");
+                    StorageServer.info("Verifying backup node...  " + (msReq.getTargetNode() == null));
 					if (StorageServer.verifyBackup(msReq.getTargetNode()))
 					{
                         StorageServer.info("Backup node good, proceeding with recovery...");
+						StorageServer.stopKA();
 						StorageServer.setMaster(msReq.getAddress(), msReq.getPort(), msReq.getKAPort());
 						filenames = StorageServer.constructRecoveryState();
 						id = StorageServer.getId();
 						status = StatusCode.OK;
-						
-						
-						OneWayWorker worker = new OneWayWorker();
-						worker.submitRequest(
-								new Communication(
-									Protocol.MS_RECOVERY_RESPONSE, 
-									new MSRecoveryResponse(
-										status, 
-										id, 
-										filenames)),
-								msReq.getAddress(),
-								msReq.getPort());
+						StorageServer.startKA();
 					}
-					
-					resp = null;
-				}
+					StorageServer.info("Creating reponse to master...  " + filenames.length);
+					resp = new Communication(Protocol.MS_RECOVERY_RESPONSE, new MSRecoveryResponse(status, id, filenames));
+				} break;
 				
 				default:
                     StorageServer.warning("Unknown request!");

@@ -181,7 +181,8 @@ public class MasterBackup
 		//Initialize the MasterServer
 		MasterServer.initialize();
 		
-		//TODO: suspend KA checking on Master
+		//Suspend the KA handler
+		MasterServer.BACKUP_suspendKA();
 		
 		//Populate the master with our nodes
 		for (Integer i : _clientMap.keySet())
@@ -198,7 +199,8 @@ public class MasterBackup
 		//Broadcast to clients
 		MasterServer.BACKUP_broadcastToClient();
 		
-		//TODO: re-enable KA checking on Master
+		//re-enable KA checking on Master
+		MasterServer.BACKUP_resumeKA();
 		
 		//My work here is done...
 	}

@@ -11,7 +11,6 @@ import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.MSHandshakeRequest;
 import cs5204.fs.rpc.MSHandshakeResponse;
-import cs5204.fs.rpc.MSRecoveryResponse;
 import cs5204.fs.rpc.CMHandshakeRequest;
 import cs5204.fs.rpc.CMHandshakeResponse;
 import cs5204.fs.rpc.CMOperationRequest;
@@ -205,16 +204,6 @@ public class MainHandler extends AbstractHandler
 					
 					resp = new Communication(Protocol.MB_HANDSHAKE_RESPONSE, new MBHandshakeResponse(status, MasterServer.getKAPort(), objects));
 				} break;
-				
-				case MS_RECOVERY_RESPONSE:
-				{
-					msg.append("Server recovery response detected...");
-					MSRecoveryResponse msResp = (MSRecoveryResponse)req.getPayload();
-					MasterServer.submitRecovery(msResp.getId(), msResp.getFilenames());					
-					
-					//DO NOT send anything back...
-					resp = null;
-				}
 
 				default:
 					break;

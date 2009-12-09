@@ -4,9 +4,11 @@ import cs5204.fs.lib.StringUtil;
 import cs5204.fs.lib.Worker;
 import cs5204.fs.lib.OneWayWorker;
 import cs5204.fs.lib.Node;
+import cs5204.fs.lib.BackupObject;
 import cs5204.fs.rpc.MSCommitRequest;
 import cs5204.fs.rpc.MSCommitResponse;
 import cs5204.fs.rpc.MSRecoveryRequest;
+import cs5204.fs.rpc.MSRecoveryResponse;
 import cs5204.fs.rpc.MBBackupRequest;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.Communication;
@@ -20,6 +22,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,9 +42,9 @@ public class MasterServer
 	private static final int DEFAULT_CLIENT_PORT = 2010;
 	private static final int DEFAULT_BACKUP_PORT = 2011;*/
 	private static final int DEFAULT_KEEPALIVE_PORT = 2012;
-    private static final int DEFAULT_STORAGE_LIFE = 2;
-    private static final int DEFAULT_BACKUP_LIFE = 2;
-	private static final int DEFAULT_CLIENT_LIFE = 3;
+    private static final int DEFAULT_STORAGE_LIFE = 4;
+    private static final int DEFAULT_BACKUP_LIFE = 4;
+	private static final int DEFAULT_CLIENT_LIFE = 5;
     private static final int DEFAULT_KEEPALIVE_INTERVAL = 5000;
 
 	private static String _ipAddr;
@@ -56,6 +59,8 @@ public class MasterServer
     private static BackupNode _backup;
 	
 	private static ConcurrentLinkedQueue<Integer> _tempRecoveryList;
+	private static LinkedList<BackupObject> _backupObjectList;
+	private static ReentrantLock _backupObjectListLock;
 	
 	private static BackupWorker _backupWorker;
 	private static Worker _worker;
@@ -83,6 +88,8 @@ public class MasterServer
 		_performKA = new AtomicBoolean(true);
 		
 		_tempRecoveryList = new ConcurrentLinkedQueue<Integer>();
+		_backupObjectList = new LinkedList<BackupObject>();
+		_backupObjectListLock = new ReentrantLock();
 		
 		/* NOTE - The storId needs to increment independent of clientId
 					because it is assigned in a round-robin fashion to hold files */
@@ -105,6 +112,24 @@ public class MasterServer
 
 		_log.info("Ready to accept requests...\n");
     }
+	
+	private static void submitBackup(BackupOperation operation, Node node)
+	{
+		_backupObjectListLock.lock();
+		_backupObjectList.add(new BackupObject(operation, node));
+		_backupObjectListLock.unlock();
+	}
+	
+	public static BackupObject [] getBackupObjects()
+	{
+		_backupObjectListLock.lock();
+		BackupObject[] objects = new BackupObject[_backupObjectList.size()];
+		_log.info("Size of backup objects " + objects.length + "       " + (_backup==null));
+		_backupObjectList.toArray(objects);
+		_backupObjectList.clear();
+		_backupObjectListLock.unlock();
+		return objects;
+	}
 
     public static int addStorageNode(String ipAddr, int port)
     {
@@ -114,7 +139,7 @@ public class MasterServer
 
         //Perform backup if a backup server registered
         if (_backup != null)
-            _backupWorker.submit(BackupOperation.ADD, new Node(storageNode.getId(), NodeType.STORAGE, storageNode.getAddress(), storageNode.getPort()));
+            submitBackup(BackupOperation.ADD, new Node(storageNode.getId(), NodeType.STORAGE, storageNode.getAddress(), storageNode.getPort()));
 
         return id;
     }
@@ -127,7 +152,7 @@ public class MasterServer
 		
         //Perform backup if a backup server registered
         if (_backup != null)
-            _backupWorker.submit(BackupOperation.ADD, new Node(clientNode.getId(), NodeType.CLIENT, clientNode.getAddress(), clientNode.getPort()));
+            submitBackup(BackupOperation.ADD, new Node(clientNode.getId(), NodeType.CLIENT, clientNode.getAddress(), clientNode.getPort()));
 		
         return id;
 	}
@@ -165,7 +190,7 @@ public class MasterServer
 
         //Perform backup if a backup server registered
         if (_backup != null)
-			_backupWorker.submit(BackupOperation.REMOVE, new Node(clientNode.getId(), NodeType.CLIENT, clientNode.getAddress(), clientNode.getPort()));
+			submitBackup(BackupOperation.REMOVE, new Node(clientNode.getId(), NodeType.CLIENT, clientNode.getAddress(), clientNode.getPort()));
 
         return true;
 	}
@@ -179,7 +204,7 @@ public class MasterServer
 
         //Perform backup if a backup server registered
         if (_backup != null)
-			_backupWorker.submit(BackupOperation.REMOVE, new Node(storageNode.getId(), NodeType.STORAGE, storageNode.getAddress(), storageNode.getPort()));
+			submitBackup(BackupOperation.REMOVE, new Node(storageNode.getId(), NodeType.STORAGE, storageNode.getAddress(), storageNode.getPort()));
 
         return true;
     }
@@ -352,7 +377,9 @@ public class MasterServer
 			} break;
 			
 			case BACKUP:
-				//Nothing;
+				if (_backup == null)
+					return false;
+				_backup.setLife(DEFAULT_BACKUP_LIFE);
 				break;
 			
 			default:
@@ -517,24 +544,29 @@ public class MasterServer
 		_tempRecoveryList = new ConcurrentLinkedQueue<Integer>();;
 		
 		//Create one-way worker to handle outbound request creation
-		OneWayWorker worker = new OneWayWorker();
+		//OneWayWorker worker = new OneWayWorker();
+		
+		_log.info("Broadcasting to storage nodes, a total of "+ _storMap.size());
 		
 		//Go through all storage nodes
 		for (Integer id : _storMap.keySet())
 		{
 			StorageNode stor = _storMap.get(id);
-			
+			_log.info("Id: " + stor.getId() + "\nAddress: " + stor.getAddress() + "\nPort: " + stor.getPort());
 			//Submit request to worker to broadcast MSRecoveryRequest
-			worker.submitRequest(
-					new Communication(
-						Protocol.MS_RECOVERY_REQUEST,
-						new MSRecoveryRequest(
-							stor,
-							_ipAddr,
-							DEFAULT_MAIN_PORT,
-							DEFAULT_KEEPALIVE_PORT)),
-					stor.getAddress(),
-					stor.getPort());
+			Communication resp = _worker.submitRequest(
+									new Communication(
+										Protocol.MS_RECOVERY_REQUEST,
+										new MSRecoveryRequest(
+											new Node(id, NodeType.STORAGE, stor.getAddress(), stor.getPort()),
+											_ipAddr,
+											DEFAULT_MAIN_PORT,
+											DEFAULT_KEEPALIVE_PORT)),
+									stor.getAddress(),
+									stor.getPort());
+			_log.info("Storage Node " + id + " is back online!");
+			MSRecoveryResponse msResp = (MSRecoveryResponse)resp.getPayload();
+			MasterServer.submitRecovery(msResp.getId(), msResp.getFilenames());
 		}
 	}
 	

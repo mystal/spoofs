@@ -18,6 +18,8 @@ public class MasterLauncher
         }
 
         if (!flag)
+		{
             MasterServer.initialize();
+		}
     }
 }

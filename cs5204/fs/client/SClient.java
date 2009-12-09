@@ -3,6 +3,7 @@ package cs5204.fs.client;
 import cs5204.fs.common.StatusCode;
 import cs5204.fs.common.Protocol;
 import cs5204.fs.common.FileOperation;
+import cs5204.fs.lib.Worker;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.CMHandshakeRequest;
@@ -11,62 +12,72 @@ import cs5204.fs.rpc.CMOperationRequest;
 import cs5204.fs.rpc.CMOperationResponse;
 import cs5204.fs.rpc.CSOperationRequest;
 import cs5204.fs.rpc.CSOperationResponse;
-import cs5204.fs.lib.Worker;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import java.util.HashMap;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 
-public class Filesystem
-{	
-	private static String _masterAddr;
-	private static int _masterPort;
-	private static int _blockSize;
-    private static int _id;
-    private static String _ipAddr;
-	private static final int _port = 3009;
-	private static boolean _connected;
-	private static Worker _worker;
-	private static Logger _log;
-	
-	//TODO: Caching of SFile handles
+public class SClient
+{
+	private static final int DEFAULT_PORT = 3009;
 
-    public static void Connect(String addr, int port) throws Exception
+    //Information about the master
+	private String m_masterAddr;
+	private int m_masterPort;
+	//private int m_blockSize;
+
+    //Information about the client
+	private boolean m_connected;
+    private int m_id;
+    private String m_ipAddr;
+
+	//TODO: Caching of SFile handles
+    private HashMap<String,SFile> m_fileMap;
+
+	private Worker m_worker;
+
+	private static Logger m_log;
+	
+    public SClient(String addr, int port)
+    {
+        m_masterAddr = addr;
+        m_masterPort = port;
+
+        m_fileMap = new HashMap<String,SFile>();
+
+        m_worker = new Worker();
+        m_log = Logger.getLogger("cs5204.fs.client");
+    }
+
+    public boolean connect()
     {
 		Communication comm = null;
 		CMHandshakeResponse resp = null;
 		
-		_log = Logger.getLogger("cs5204.fs.client");
-		
-		_log.info("Setting up Filesystem parameters...");
-		
-		_worker = new Worker();
-		_masterAddr = addr;
-		_masterPort = port;
-		
         try {
-            _ipAddr = InetAddress.getLocalHost().getHostAddress();
+            m_ipAddr = InetAddress.getLocalHost().getHostAddress();
         }
         catch (UnknownHostException ex) {
             //TODO: Log/fail
         }
 		
-		_log.info("Done setting up parameters.");
+		m_log.info("Done setting up parameters.");
 		
-		_log.info("Submitting handshake to master at " + _masterAddr + ":" + _masterPort + "...");
+		m_log.info("Submitting handshake to master at " + m_masterAddr + ":" + m_masterPort + "...");
 		
-		comm = _worker.submitRequest(
+		comm = m_worker.submitRequest(
 								new Communication(
 									Protocol.CM_HANDSHAKE_REQUEST, 
-									new CMHandshakeRequest(_ipAddr, _port)), 
-								_masterAddr, 
-								_masterPort);
+									new CMHandshakeRequest(m_ipAddr, DEFAULT_PORT)), 
+								m_masterAddr,
+								m_masterPort);
 		
 		if (comm == null)
 		{
-			_log.warning("NO COMMUNICATION RECEIVED FROM MASTER!");
+			m_log.warning("NO COMMUNICATION RECEIVED FROM MASTER!");
 		}
 			
 		resp = (CMHandshakeResponse)comm.getPayload();
@@ -74,35 +85,41 @@ public class Filesystem
 		switch (resp.getStatus())
 		{
 			case OK:
-				_id = resp.getId();
-				_blockSize = resp.getBlockSize();
-				_connected = true;
-				_log.info("Successful handshake!  Now connected with id " + _id);
+				m_id = resp.getId();
+				//m_blockSize = resp.getBlockSize();
+				m_connected = true;
+				m_log.info("Successful handshake!  Now connected with id " + m_id);
 				break;
 			case DENIED:
 			default:
-				_log.warning("Request denied");
+				m_log.warning("Request denied");
                 break;
 		}
 		
 		//TODO: Start KA client
 		//TODO: Start thread on _port that listens for failover requests from backup
+        
+        return true;
     }
-	
-	public static void Disconnect()
-	{
-		//TODO:  Clean up exec pool
-		//TODO:  Close open handles
-		//TODO:  Stop daemon thread
-	}
 
-    public static SFile createFile(String filepath)
+    public void disconnect()
     {
-		if (!_connected)
+		//TODO: Clean up exec pool
+		//TODO: Stop daemon thread
+        //TODO: Unregister from master
+
+        for (String filepath: m_fileMap.keySet())
+            m_fileMap.get(filepath).setOpened(false);
+        m_fileMap = new HashMap<String,SFile>();
+    }
+
+    public SFile createFile(String filepath)
+    {
+		if (!m_connected)
 			return null;
 		
 		SFile file = null;
-		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.CREATE, filepath, _id));
+		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.CREATE, filepath, m_id));
 		
 		switch (masterResp.getStatus())
 		{
@@ -117,13 +134,13 @@ public class Filesystem
         return file;
     }
 
-    public static boolean createDirectory(String dirpath)
+    public boolean createDirectory(String dirpath)
     {
-		if (!_connected)
+		if (!m_connected)
 			return false;
 		
 		boolean success = false;
-		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.MKDIR, dirpath, _id));
+		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.MKDIR, dirpath, m_id));
 		
 		switch (masterResp.getStatus())
 		{
@@ -138,13 +155,13 @@ public class Filesystem
         return success;
     }
 
-    public static SFile open(String filepath)
+    public SFile open(String filepath)
     {
-        if (!_connected)
+        if (!m_connected)
 			return null;
 		
 		SFile file = null;
-		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.OPEN, filepath, _id));
+		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.OPEN, filepath, m_id));
 		
 		switch (masterResp.getStatus())
 		{
@@ -159,22 +176,22 @@ public class Filesystem
         return file;
     }
 
-    public static boolean close(SFile file)
+    public boolean close(SFile file)
     {
-		if (!_connected)
+		if (!m_connected)
 			return false;
 		//TODO:  Close with master???
 		file.setOpened(false);
         return true;
     }
 
-    public static boolean removeFile(String filepath)
+    public boolean removeFile(String filepath)
     {
-		if (!_connected)
+		if (!m_connected)
 			return false;
 		
 		SFile file = null;
-		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.REMOVE, filepath, _id));
+		CMOperationResponse masterResp = sendMasterOperationRequest(new CMOperationRequest(FileOperation.REMOVE, filepath, m_id));
 		
 		switch (masterResp.getStatus())
 		{
@@ -190,11 +207,11 @@ public class Filesystem
         return true;
     }
 
-    public static boolean removeDirectory(String dirpath)
+    public boolean removeDirectory(String dirpath)
     {
-		if (!_connected)
+		if (!m_connected)
 			return false;
-		//TODO
+		//TODO: do the actual remove operation
         return false;
     }
 
@@ -202,13 +219,13 @@ public class Filesystem
 	
 	//For use with SFile objects
 	
-	public static boolean append(SFile file, byte[] data)
+	public boolean append(SFile file, byte[] data)
 	{
-		if (!_connected)
+		if (!m_connected)
 			return false;
 		
 		CSOperationResponse csResp = sendStorageOperationRequest(
-											new CSOperationRequest(_id, FileOperation.APPEND, file.getPath(), data, -1, data.length),
+											new CSOperationRequest(m_id, FileOperation.APPEND, file.getPath(), data, -1, data.length),
 											file.getAddress(),
 											file.getPort());
 		switch (csResp.getStatus())
@@ -225,13 +242,13 @@ public class Filesystem
 		return true;
 	}
 	
-	public static boolean read(SFile file, byte [] data, int off, int len)
+	public boolean read(SFile file, byte [] data, int off, int len)
 	{
-		if (!_connected)
+		if (!m_connected)
 			return false;
 		
 		CSOperationResponse csResp = sendStorageOperationRequest(
-											new CSOperationRequest(_id, FileOperation.READ, file.getPath(), null, off, len),
+											new CSOperationRequest(m_id, FileOperation.READ, file.getPath(), null, off, len),
 											file.getAddress(),
 											file.getPort());
 		switch (csResp.getStatus())
@@ -250,13 +267,13 @@ public class Filesystem
 		return true;
 	}
 	
-	public static boolean write(SFile file, byte [] data, int off, int len)
+	public boolean write(SFile file, byte [] data, int off, int len)
 	{
-		if (!_connected)
+		if (!m_connected)
 			return false;
 		
 		CSOperationResponse csResp = sendStorageOperationRequest(
-											new CSOperationRequest(_id, FileOperation.WRITE, file.getPath(), data, off, len),
+											new CSOperationRequest(m_id, FileOperation.WRITE, file.getPath(), data, off, len),
 											file.getAddress(),
 											file.getPort());
 		switch (csResp.getStatus())
@@ -273,9 +290,9 @@ public class Filesystem
 		return true;
 	}
 	
-	private static CMOperationResponse sendMasterOperationRequest(CMOperationRequest masterReq)
+	private CMOperationResponse sendMasterOperationRequest(CMOperationRequest masterReq)
 	{
-		Communication resp = _worker.submitRequest(new Communication(Protocol.CM_OPERATION_REQUEST, masterReq), _masterAddr, _masterPort);
+		Communication resp = m_worker.submitRequest(new Communication(Protocol.CM_OPERATION_REQUEST, masterReq), m_masterAddr, m_masterPort);
 		
 		if (resp == null)
 			return null;
@@ -283,9 +300,9 @@ public class Filesystem
 		return (CMOperationResponse)resp.getPayload();
 	}
 	
-	private static CSOperationResponse sendStorageOperationRequest(CSOperationRequest storageReq, String ipAddr, int port)
+	private CSOperationResponse sendStorageOperationRequest(CSOperationRequest storageReq, String ipAddr, int port)
 	{
-		Communication resp = _worker.submitRequest(new Communication(Protocol.CS_OPERATION_REQUEST, storageReq), ipAddr, port);
+		Communication resp = m_worker.submitRequest(new Communication(Protocol.CS_OPERATION_REQUEST, storageReq), ipAddr, port);
 		
 		if (resp == null)
 			return null;
@@ -293,3 +310,4 @@ public class Filesystem
 		return (CSOperationResponse)resp.getPayload();
 	}
 }
+

@@ -27,26 +27,21 @@ public class SFile
 	{
 		return m_port;
 	}
+	
+	protected boolean isOpened()
+	{
+		return m_opened;
+	}
+	
+	protected void setOpened(boolean opened)
+	{
+		m_opened = opened;
+	}
 
     public String getPath()
     {
         return m_filepath;
     }
-	
-	public boolean append(byte[] data)
-	{
-		return Filesystem.append(this, data);
-	}
-	
-	public boolean write(byte [] data)
-	{
-		return Filesystem.write(this, data, m_pos, data.length);
-	}
-	
-	public boolean read(byte [] data)
-	{
-		return Filesystem.read(this, data, m_pos, data.length);
-	}
 	
 	public void seek(int pos)
 	{
@@ -61,15 +56,5 @@ public class SFile
 	public int tell()
 	{
 		return m_pos;
-	}
-	
-	protected boolean isOpened()
-	{
-		return m_opened;
-	}
-	
-	protected void setOpened(boolean opened)
-	{
-		m_opened = opened;
 	}
 }

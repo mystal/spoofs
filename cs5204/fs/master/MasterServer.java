@@ -365,18 +365,32 @@ public class MasterServer
     {
 		if (_performKA.get())
 		{
+            //TODO: fix removing while iterating
+            ArrayList<Integer> toRemove = new ArrayList<Integer>();
 			Set<Map.Entry<Integer,StorageNode>> storEntries = _storMap.entrySet();
 			Set<Map.Entry<Integer,ClientNode>> clientEntries = _clientMap.entrySet();
+
+            //Determine which storage nodes to remove
 			for (Map.Entry<Integer,StorageNode> entry: storEntries)
 			{
 				if (entry.getValue().decrementAndGetLife() == 0)
-					MasterServer.removeStorageNode(entry.getKey());
+                    toRemove.add(entry.getKey());
 			}
+            //Perform removal
+            for (int id: toRemove)
+                MasterServer.removeStorageNode(id);
+
+            toRemove = new ArrayList<Integer>();
+            //Determine which storage nodes to remove
 			for (Map.Entry<Integer,ClientNode> entry: clientEntries)
 			{
 				if (entry.getValue().decrementAndGetLife() == 0)
-					MasterServer.removeClientNode(entry.getKey());
+                    toRemove.add(entry.getKey());
 			}
+            //Perform removal
+            for (int id: toRemove)
+                MasterServer.removeClientNode(id);
+
 			if (_backup != null)
 				if (_backup.decrementAndGetLife() == 0)
 					MasterServer.removeBackupNode();

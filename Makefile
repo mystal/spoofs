@@ -3,7 +3,7 @@ all: client master storage test
 out = classes
 srcdir = cs5204/fs
 
-client = ${srcdir}/client/Filesystem.java
+client = ${srcdir}/client/SClient.java
 masterserver = ${srcdir}/master/MasterLauncher.java
 storageserver = ${srcdir}/storage/StorageServer.java
 test = ${srcdir}/test/SimpleClient.java

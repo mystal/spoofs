@@ -1,9 +1,6 @@
 General
--Possible name: spoofs
--Make a list of assumptions that we expect our filesystem to be used under
-
-Master
--ClientHandler class
--KeepAliveHandler class (udp socket)
--StorageHandler class
--set up a shutdown handler to elegantly clean up when kill signal sent
+-Write paper (make sure to send our source code with the paper)
+-Update README with instructions on making and using our file system
+-Have directory hierarchy remade on storage nodes instead of storing what the hierarchy is in a map.
+-Have a static master IP and port that the master backup takes upon failure
+-Look at failure model... (assuming master is dead when we can't talk..)

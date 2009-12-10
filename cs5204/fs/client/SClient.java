@@ -256,7 +256,9 @@ public class SClient
 			case OK:
 				byte[] reply = csResp.getData();
 				for (int i = 0 ; i < len ; i++)
+				{
 					data[i] = reply[i];
+				}
 				break;
 			case DENIED:
 			default:

@@ -154,6 +154,22 @@ public class StorageServer
 		return _fileMap.remove(filename) != null;
 	}
 	
+	public static boolean appendFile(String filename, byte[] data, int len)
+	{
+		_log.info("Trying to append " + len + " bytes in file: " + filename);
+		StorFile file = _fileMap.get(filename);
+		if (file == null) return false;
+		try {
+			file.append(data);
+		}
+		catch (IOException ex) {
+			_log.warning("Could not complete append!");
+			return false;
+		}
+        _log.info("Append complete.");
+		return true;
+	}
+	
 	public static boolean writeFile(String filename, byte[] data, int off, int len)
 	{
         _log.info("Trying to write " + len + " bytes at " + off + " in file: " + filename);
@@ -174,7 +190,7 @@ public class StorageServer
 	{
         _log.info("Trying to read " + len + " bytes at " + off + " in file: " + filename);
 		StorFile file = _fileMap.get(filename);
-		if (file == null) return false;
+		if (file == null || data==null) return false;
 		try {
 			file.read(data, off, len);
 		}
@@ -256,6 +272,13 @@ public class StorageServer
 			m_writeLock = m_readWriteLock.writeLock();
 		}
 		
+		public void append(byte[] data) throws IOException
+		{
+			m_writeLock.lock();
+			m_file.write(data, (int)m_file.length(), data.length); 
+			m_writeLock.unlock();
+		}
+		
 		public void write(byte [] data, int off, int len) throws IOException
 		{
 			m_writeLock.lock();
@@ -266,6 +289,7 @@ public class StorageServer
 		public void read(byte [] data, int off, int len) throws IOException
 		{
 			m_readLock.lock();
+			m_file.seek(off);
 			m_file.read(data, off, len);
 			m_readLock.unlock();
 		}

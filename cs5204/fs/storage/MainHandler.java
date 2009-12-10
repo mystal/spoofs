@@ -49,17 +49,24 @@ public class MainHandler extends AbstractHandler
 					byte [] data = null;
 					switch (csReq.getFileOperation())
 					{
+						case APPEND:
+							StorageServer.info("Write request... for " + csReq.getFilename() + " for  "  + csReq.getLength());
+							if (StorageServer.appendFile(csReq.getFilename(), csReq.getData(), csReq.getLength()))
+								status = StatusCode.OK;
+							break;
 						case WRITE:
-                            StorageServer.info("Write request...");
+                            StorageServer.info("Write request... for " + csReq.getFilename() + " for "  + csReq.getLength() + " bytes.");
 							if (StorageServer.writeFile(csReq.getFilename(), csReq.getData(), csReq.getOffset(), csReq.getLength()))
 								status = StatusCode.OK;
 							break;
 						case READ:
                             StorageServer.info("Read request...");
 							byte [] buffer = new byte[csReq.getLength()];
-							if (StorageServer.readFile(csReq.getFilename(), data, csReq.getOffset(), csReq.getLength()))
+							if (StorageServer.readFile(csReq.getFilename(), buffer, csReq.getOffset(), csReq.getLength()))
 							{
-								data = buffer;
+								data = new byte[buffer.length];
+								for (int i  = 0 ; i < buffer.length ; i++)
+									data[i] = buffer[i];
 								status = StatusCode.OK;
 							}
 							break;

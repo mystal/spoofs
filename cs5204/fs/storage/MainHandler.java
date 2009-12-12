@@ -120,6 +120,7 @@ public class MainHandler extends AbstractHandler
 						StorageServer.startKA();
 					}
 					StorageServer.info("Creating reponse to master...  " + filenames.length);
+					StorageServer.info("Back online with new master... at " + msReq.getAddress() + ":" + msReq.getPort());
 					resp = new Communication(Protocol.MS_RECOVERY_RESPONSE, new MSRecoveryResponse(status, id, filenames));
 				} break;
 				

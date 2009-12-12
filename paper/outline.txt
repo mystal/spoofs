@@ -1,0 +1,25 @@
+Abstract
+-Summarize the important parts of our project
+-Quickly outline our goals
+-Mention how far we got (and talk about recovery)
+
+Introduction
+-Larger summary of what distributed systems are and so on..
+-Bring up the goals we were trying to accomplish in more detail
+
+Background/Related Work
+-Background may not be required if we do enough in the intro
+-In the related work we should talk about HDFS, GFS, and Ceph in terms of the goals we are aiming for
+
+SPOOFS (Goals, Architecture, etc)
+-This can likely be broken up into several main sections
+-A section on backup/recovery?
+
+Discussion
+-Talk about how our FS compares to other distributed FSes
+
+Future Work
+-Talk about all the things we would have wanted to do had we more time
+
+Conclusion
+-Lotsa BS

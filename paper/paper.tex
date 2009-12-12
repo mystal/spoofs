@@ -1,0 +1,69 @@
+
+\documentclass[10pt,twocolumn,letterpaper]{article}
+% \documentclass[10pt,twocolumn]{article}
+
+\usepackage{times}
+\usepackage{subfigure}
+\usepackage{fullpage}
+\usepackage[dvips]{graphicx}
+\usepackage{fancybox}
+\usepackage[]{rotating}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{framed}
+\usepackage{color}
+% \usepackage{style/savetrees}
+\usepackage{wrapfig}
+\usepackage{url}
+\usepackage{cite}        % convert consecutive citations into a range
+\usepackage{xspace}      % \xspace
+\usepackage{fancyhdr}
+
+
+%% Comments, these add commands to allow authors to leave notes for each other,
+%% simply change the names, and if you wish the colors.
+\newcommand{\pavan}[1]{
+  \begin{framed}
+    \noindent{\textcolor{blue}{\em #1 -- {\sc PAVAN}}}
+  \end{framed}
+}
+
+\newcommand{\wu}[1]{
+  \begin{framed}
+    \noindent{\textcolor{red}{\em #1 -- WU}}
+  \end{framed}
+}
+
+\newcommand{\ganesh}[1]{
+  \begin{framed}
+    \noindent{\textcolor{green}{\em #1 -- {\sc GANESH}}}
+  \end{framed}
+}
+
+\begin{document}
+
+\title{\LARGE~\\[-8.0ex] PLACE TITLE HERE}
+\author{AUTHORS HERE}
+
+
+\date{}
+\maketitle
+
+
+
+\input{text/abstract}
+\input{text/introduction}
+\input{text/methods}
+\input{text/results}
+\input{text/related_work.tex}
+\input{text/conclusions}
+
+\begin{footnotesize}
+\bibliographystyle{plain}
+\bibliography{bib/bibtex}
+\end{footnotesize}
+
+\end{document}

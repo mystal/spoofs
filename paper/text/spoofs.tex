@@ -1,4 +1,5 @@
 \section{SPOOFS}
+\label{sec:spoofs}
 
 In this paper we present SPOOFS: a SimPle, Object-Oriented, File System. This is our take on a distributed file system and, though at an early stage, it is fully capable of servicing read, write, and append requests from connected clients. The architecture is the standard Client-Master-Storage architecture, with one Master node and several Storage and Client nodes, similar to that of HDFS and GFS. It is written in Java, chosen for its ease of development and use of by many other distributed systems, and handles communication through Java object serialization.
 
@@ -8,15 +9,15 @@ For SPOOFS, we aimed to achieve a couple of basic goals:
 \item The ability to add/remove storage and client nodes dynamically and
 \item one more thing
 \end{enumerate}
-Our main goal, however, was in addressing the question, "What happens if the Master node goes down?" As mentioned above, HDFS \todo{and GFS?} do not have particularly elegant methods of Master failure. In fact, in the case of HDFS the entire system will go down and then only after a rather lengthy recovery process may the file system be brought up and used again. Therefore, we strove to provide a mechanism to seamlessly recover the file system if the Master were to instantly disappear from the distributed system---for example, if the power cord had been pulled out on the machine.
+Our main goal, however, was in addressing the question, "What happens if the Master node goes down?" As mentioned above, HDFS do not have particularly elegant methods for handling Master failure. In fact, in the case of HDFS the entire system will go down and then only after a rather lengthy recovery process may the file system be brought up and used again. Therefore, we strove to provide a mechanism to seamlessly recover the file system if the Master were to instantly disappear from the distributed system---for example, if the power cord had been accidentally pulled out of the machine.
 
-For the sake of simplicity---our group had only a few months to work on the project---files are not split into chunks but instead are stored as a single file on a Storage node. In addition, currently the files are not replicated across several Storage nodes. (more general stuff about it? such as the assumptions we made: one file on one storage node per distributed file, files assigned to storage nodes in a round-robin fashion, we're really close to getting it to work need to support storage nodes dropping out and replication of data and possibly striping data in blocks across storage nodes)
+For the sake of simplicity---our group had only a few months to work on the project---files are not split into chunks but are instead stored as a single file on a Storage node. In addition, the files are not currently replicated across several Storage nodes, though the functionality can be added. \todo{Any more?}
 
-\subsection{Master}
+\subsection{Master Node}
 
-The Master node in our system is represented by the MasterServer class. It is the first node that must be brought online for SPOOFS to function and also the central location responsible for handling metadata operations on the file system. Storage nodes and clients that connect to the file system interact with the master at initialization and whenever performing operations that modify the layout of the file system.
+The Master node in our system is represented by the MasterServer class. It is the first node that must be brought online for SPOOFS to function and also the central node responsible for handling metadata operations on the file system. Storage nodes and clients that connect to the file system interact with the master at initialization and whenever performing operations that modify the layout of the file system.
 
-Currently, the Master stores a few pieces of metadata:
+At this time, the Master stores only a few pieces of metadata:
 \begin{enumerate}
 \item Directory and file hierarchy
 \item Physical location (IP address) of files
@@ -24,11 +25,13 @@ Currently, the Master stores a few pieces of metadata:
 \item Client nodes online
 \end{enumerate}
 
-\subsection{Storage}
+\todo{more general stuff about it? such as the assumptions we made: one file on one storage node per distributed file, files assigned to storage nodes in a round-robin fashion, we're really close to getting it to work need to support storage nodes dropping out and replication of data and possibly striping data in blocks across storage nodes}
+
+\subsection{Storage Nodes}
 
 text
 
-\subsection{Client}
+\subsection{Client Nodes and Interface}
 
 text
 
@@ -36,4 +39,3 @@ text
 
 text
 
-\label{sec:spoofs}

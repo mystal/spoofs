@@ -13,11 +13,11 @@ Our main goal, however, was in addressing the question, ``What happens if the Ma
 
 For the sake of simplicity---our group had only a few months to work on the project---files are not split into chunks but are instead stored as a single file on a Storage node. In addition, the files are not currently replicated across several Storage nodes, though the functionality can be added. \todo{Any more?}
 
-\todo{Include figure of architecture?}
+\todo{Include figure of architecture}
 
 \subsection{Master Node}
 
-The Master node in our system is, in the traditional sense, the master of the entire file system, watching over nodes in the system and arbitrating actions that are performed on the system. In addition, it is the first node that must be brought online for SPOOFS to function and also the central node responsible for handling all metadata operations. Storage nodes that are added and clients that connect to the file system interact with the master at initialization and whenever performing operations that modify the layout of the file system.
+The Master node in our system is, in the traditional sense, the master of the entire file system, watching over nodes connected to the system. In addition, it is the first node that must be brought online for SPOOFS to function and also the central node responsible for handling all metadata operations. Storage nodes that are added and clients that connect to the file system interact with the master at initialization and whenever performing operations that modify the layout of the file system.
 
 At this time, the Master stores only a few pieces of metadata:
 \begin{enumerate}

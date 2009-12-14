@@ -1,17 +1,17 @@
 \section{SPOOFS}
 \label{sec:spoofs}
 
-In this paper we present SPOOFS: a SimPle, Object-Oriented, File System. This is our take on a distributed file system and, though at an early stage, it is fully capable of servicing read, write, and append requests from connected clients. The architecture is the standard Client-Master-Storage architecture, with one Master node and several Storage and Client nodes, similar to HDFS and GFS. The entire codebase is written in Java---chosen for its ease of development and use of by many other distributed systems---and handles communication through Java object serialization.
+We present SPOOFS, a SimPle Object-Oriented File System. This is our take on a distributed file system and, though at an early stage, it is fully capable of servicing read, write, and append requests from connected clients. The architecture is the standard Client-Master-Storage architecture, with one Master node, several Storage nodes, and multiple Client nodes, similar to HDFS and GFS. The entire codebase is written in Java---chosen for its use in many other distributed systems---and all communication is handled Java object serialization.
 
-While designing and writing SPOOFS, we aimed to achieve a couple of basic goals:
+While designing and writing SPOOFS, we aimed to achieve a few basic goals:
 \begin{enumerate}
 \item A simple and working read/write/append distributed file system with
 \item The ability to add/remove storage and client nodes dynamically and
 \item A clean interface for clients to interact with the file system
 \end{enumerate}
-Our main goal, however, was in addressing the question, ``What happens if the Master node goes down?'' Some distributed file systems, notably HDFS, do not have particularly elegant methods for handling Master failure. In fact, in the case of HDFS the entire system will go down and only after performing a rather lengthy recovery process may the file system be brought up and used again. Therefore, we strove to provide a mechanism to seamlessly recover the file system if the Master were to instantly disappear from the distributed system---for example, if the power cord had been accidentally pulled out of the machine.
+An additional goal arose out of our result to address fault tolerance.  We sought to address the question, ``What happens if the Master node goes down?'' Some distributed file systems, notably HDFS, do not have particularly elegant methods for handling Master failure. In fact, in the case of HDFS the entire system will go down and only after performing a rather lengthy recovery process may the file system be brought up and used again. Therefore, we strove to provide a mechanism to seamlessly recover the file system if the Master were to instantly disappear from the distributed system---for example, if the power cord had been accidentally pulled out of the machine.
 
-For the sake of simplicity---our group had only a few months to work on the project---files are not split into chunks but are instead stored as a single file on a Storage node. In addition, the files are not currently replicated across several Storage nodes, though the functionality can be added. \todo{Any more?}
+For the sake of simplicity, and to focus on more closely on our goals, several key design decisions were made to omit certain features from SPOOFS.  First, files are not split into chunks but are instead stored as a single file on a Storage node. Splitting a file into chunks can provide parallel reads and writes for clients.  In addition, the files are not currently replicated across several Storage nodes, though the functionality can be added with relative ease. Finally, the client library could be made more robust to provide retries of failed operations, and possibly batching of operations if possible.
 
 \todo{Include figure of architecture}
 
@@ -19,28 +19,24 @@ For the sake of simplicity---our group had only a few months to work on the proj
 
 The Master node in our system is, in the traditional sense, the master of the entire file system, watching over nodes connected to the system. In addition, it is the first node that must be brought online for SPOOFS to function and also the central node responsible for handling all metadata operations. Storage nodes that are added and clients that connect to the file system interact with the master at initialization and whenever performing operations that modify the layout of the file system.
 
-At this time, the Master stores only a few pieces of metadata:
+At this time, the Master stores these pieces of metadata:
 \begin{enumerate}
 \item Directory and file hierarchy
 \item Physical location (IP address) of files
 \item Storage nodes online
 \item Clients connected
 \end{enumerate}
-The directory and file hierarchy are represented in the same way as on traditional UNIX-based systems (e.g. ``/foo/bar.txt''). When a file is created, the Master does a round-robin search for an available Storage node. Upon finding a valid candidate, it will then tell the node to locally create the file and return with a response once it has completed the task. At this point, the Master can store a map of a string representation of the location of the file in the distributed file system to the IP address of the Storage node containing it. Doing a search, then, is a trivial task.
+The directory and file hierarchy are represented in the same way as on traditional UNIX-based systems (e.g. ``/foo/bar.txt''). When a Client requests to create a file, the Master does a round-robin search for an available Storage node. Upon finding a valid candidate, it will tell the chosen Storage node to create a local, persistent copy of the file.  After the file has been created on the Storage node, the Master can insert the file into its representation of the file system structure, and map it to the location of the file (via the IP address of the Storage node containing it). Subsequent requests to locate the file by clients will, thus, only require a simple directory traversal on the Master.
 
-Storage nodes are stored in a map of an assigned identification number to IP address. Keeping track of the online Storage nodes is used for knowing when a Storage node has been taken offline. By exchanging \textit{KeepAlive} communication between the Master and Storage nodes at a set interval, the Master can assume that a Storage node has gone down after missing a few \textit{KeepAlives}. At such a point, it can choose how to respond, possibly by removing the files on that Storage node. However, we have not yet decided how to handle this case.
+Storage nodes are stored in a map of an assigned identification number to IP address. The Master keeps track of which Storage nodes are online, and which have gone offline (expectedly or unexpectedly). By exchanging \textit{KeepAlive} communication between the Master and Storage nodes at a set interval, the Master can assume that a Storage node has gone down after missing a few \textit{KeepAlives}. At such a point, it can choose how to respond, possibly by removing the files on that Storage node. The inclusion of data replication across multiple storage nodes would enable a recovery mechanism to point incoming requests to the replicated data.  However, such a mechanism does not yet exist because Storage node data replication is not supported.
 
-Clients, like Storage nodes, are also assigned identification numbers. Having a list of connected Clients allows the Master node to also exchange \textit{KeepAlives} with them. \todo{more about stuff we can do with clients}
-
-The Master currently stores all of this data in memory; it is not flushed to disk. \todo{any other miscellaneous things?}
+Clients, like Storage nodes, are also assigned identification numbers. Having a list of connected Clients allows the Master node to also exchange \textit{KeepAlives} with them. Clients can connect and disconnect themselves from the Master, and only a connected Client can perform operations on the Master.  The Master handles metadata requests from Clients, such as creating a file, but the Storage nodes handle the actual read and write requests.
 
 \subsection{Storage Nodes}
 
-Storage nodes in SPOOFS store the actual data of the distributed file system. They can be dynamically brought online and taken offline once the Master node has been initialized. Upon connecting to the Master, a Storage node will perform a handshake, giving the Master a port to send communication to and receiving an identification number that it is to send with its \textit{KeepAlives}.
+Storage nodes in SPOOFS store the actual data of the distributed file system. They can be dynamically brought online and taken offline once the Master node has been initialized. Upon connecting to the Master, a Storage node will perform a handshake, giving the Master a port to which communication can be sent and receiving an identification number that it is to send with its \textit{KeepAlives}.
 
-When given a file to store, a Storage node will also keep track of the location of the file in the distributed file system. This is used for the recovery of the file system.
-
-Handling synchronization of readers and writers is done entirely on Storage nodes through the use of a Java ReentrantReadWriteLock. This can be done as single files in the distributed file system are stored in one location, one file in a Storage node, of the entire system. That and the fact that Clients need not go through the Master once they have opened a file.
+When given a file to store, a Storage node maps the global location of the file to a local location.  For instance, given a request to store ``/foo/bar.txt'', the Storage node will create a local file called ``localfile\_\textit{n}'' in a predetermined directory.  The number \textit{n} increments as files are allocated.  Currently, all files are created in the same local directory, due to simplicity.  We are open to exploring other ways to represent hierarchical structure. Handling synchronization of readers and writers is done entirely on Storage nodes through the use of a Java ReentrantReadWriteLock, which solves the common reader-writer synchronization problem.
 
 \subsection{Client Nodes and Interface}
 

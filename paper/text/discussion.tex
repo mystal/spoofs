@@ -1,5 +1,11 @@
 \section{Discussion}
 \label{sec:discussion}
 
-\todo{we're really close to getting it to work need to support storage nodes dropping out and replication of data and possibly striping data in blocks across storage nodes}
+The testing that we have performed on SPOOFS is admittedly minimal, covering mainly the basic test cases.  It is, however, capable of handling multiple Storage and Client nodes that come online dynamically.  It has also proven that the round-robin method for assigning files to Storage nodes works, this will hopefully allow for better load balancing in larger scale systems.  Removing a file and (empty) directory has also shown to work, meaning that all of the filesystem metadata operations are working as specified.  
+
+One of the most important metadata operation that the Client requests from the Master is opening a file handle.  The master is able to successfully traverse its internal directory structure, locate the file, and provide the address of the file back to the Client.  From here, the Client can perform operations, such as reading and writing, directly on the Storage node.  The caching of file handles on the Client also means that the Client does not need to talk to the Master for every operation it performs, using an already opened file handle in its read and write requests.
+
+Important to SPOOFS was also that the backup and recovery procedure worked properly.  Recall that our goal was to be able to pull the plug on the master and have the system recover and make progress.  Our testing, including the live demo at the presentation, showed that this functionality is in working order.  We cannot say how SPOOFS handles other failure models, but we believe that additional tweaking of the code will be needed to handle them.
+
+Overall, we feel have met the design goals stated in Section 3.  The file operations allow for read, write, and append operations, as well as manipulating file system metadata.  The Storage and Client nodes can be brought online at any time (assuming the Master has been started), and their existence can even be backed up to a Backup node.  Finally, the Client interface provides a means by which other applications can leverage the distributed file system.  Also, our goal for meeting the basic failure model of the Master node crashing has been accomplished.
 

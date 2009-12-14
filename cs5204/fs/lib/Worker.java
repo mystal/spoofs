@@ -65,6 +65,11 @@ public class Worker
 		return task.getResponse();
 	}
 	
+	public void shutdown()
+	{
+		m_exec.shutdown();
+	}
+	
 	private class WorkerTask implements Runnable
 	{
 		private Communication m_req;

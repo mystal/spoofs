@@ -8,6 +8,8 @@ import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.KARequest;
 import cs5204.fs.rpc.KAResponse;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class KeepAliveClient implements Runnable
 {
 	private static int KA_INTERVAL = 5000;
@@ -16,6 +18,7 @@ public class KeepAliveClient implements Runnable
 	private String m_masterAddr;
 	private int m_masterPort;
 	private Worker m_worker;
+	private AtomicBoolean m_alive;
 	
 	public KeepAliveClient(NodeType type, int id, String addr, int port)
 	{
@@ -28,12 +31,13 @@ public class KeepAliveClient implements Runnable
 		m_id = id;
 		m_masterAddr = addr;
 		m_masterPort = port;
+		m_alive = new AtomicBoolean(true);
 		m_worker = new Worker(timeout);
 	}
 	
 	public void run()
 	{
-		while (pulse())
+		while (m_alive.get() && pulse())
 		{
 			try {
 				Thread.sleep(KA_INTERVAL);
@@ -42,6 +46,11 @@ public class KeepAliveClient implements Runnable
 				//TODO: Log/fail
 			}
 		}
+	}
+	
+	public void stop()
+	{
+		m_alive.set(false);
 	}
 	
 	public boolean pulse()

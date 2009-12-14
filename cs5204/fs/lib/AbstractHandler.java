@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractHandler implements Runnable
 {
@@ -23,11 +24,12 @@ public abstract class AbstractHandler implements Runnable
 	protected int m_port;
 	protected ServerSocket m_serverSocket;
 	protected ExecutorService m_exec;
+	protected AtomicBoolean m_alive;
 	
 	public AbstractHandler(int port)
 	{
 		m_port = port;
-		
+		m_alive = new AtomicBoolean(true);
 		m_exec = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
 					KEEP_ALIVE_TIME, TimeUnit.SECONDS, 
 					new LinkedBlockingQueue<Runnable>(CORE_POOL_SIZE));
@@ -44,7 +46,7 @@ public abstract class AbstractHandler implements Runnable
 			return;
 		}	
 		int counter = 0;
-		while (true)
+		while (m_alive.get())
 		{
 			Socket sock = null;
 			try {
@@ -53,6 +55,7 @@ public abstract class AbstractHandler implements Runnable
 			}
 			catch (IOException ex) {
 				//TODO: Log
+				continue;
 			}
 			
 			if (sock != null)
@@ -64,6 +67,18 @@ public abstract class AbstractHandler implements Runnable
 	}
 	
     protected abstract AbstractHandlerTask createHandlerTask(Socket socket, int id);
+	
+	public void stop()
+	{
+		m_exec.shutdown();
+		m_alive.set(false);
+		try {
+			m_serverSocket.close();
+		}
+		catch (IOException ex) {
+			//TODO:
+		}
+	}
 
     protected abstract class AbstractHandlerTask implements Runnable
     {

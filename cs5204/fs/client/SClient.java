@@ -3,11 +3,16 @@ package cs5204.fs.client;
 import cs5204.fs.common.StatusCode;
 import cs5204.fs.common.Protocol;
 import cs5204.fs.common.FileOperation;
+import cs5204.fs.common.NodeType;
 import cs5204.fs.lib.Worker;
+import cs5204.fs.lib.KeepAliveClient;
+import cs5204.fs.lib.Node;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.CMHandshakeRequest;
 import cs5204.fs.rpc.CMHandshakeResponse;
+import cs5204.fs.rpc.CMFootshakeRequest;
+import cs5204.fs.rpc.CMFootshakeResponse;
 import cs5204.fs.rpc.CMOperationRequest;
 import cs5204.fs.rpc.CMOperationResponse;
 import cs5204.fs.rpc.CSOperationRequest;
@@ -17,12 +22,15 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Logger;
 
 public class SClient
 {
-	private static final int DEFAULT_PORT = 3009;
+	private static final int DEFAULT_MASTER_KA_TIMEOUT = 3000;
+	
+	private static ConcurrentHashMap<Integer, SClient> _clientMap = new ConcurrentHashMap<Integer, SClient>();
 
     //Information about the master
 	private String m_masterAddr;
@@ -31,20 +39,26 @@ public class SClient
 
     //Information about the client
 	private boolean m_connected;
+	private int m_handlerPort;
     private int m_id;
     private String m_ipAddr;
 
-	//TODO: Caching of SFile handles
+	//Caching of SFile handles
     private HashMap<String,SFile> m_fileMap;
 
 	private Worker m_worker;
+	private KeepAliveClient m_kaClient;
+	private Thread m_kaThread;
+	private MasterHandler m_masterHandler;
+	private Thread m_masterThread;
 
 	private static Logger m_log;
 	
-    public SClient(String addr, int port)
+    public SClient(String addr, int port, int handlerPort)
     {
         m_masterAddr = addr;
         m_masterPort = port;
+		m_handlerPort = handlerPort;
 
         m_fileMap = new HashMap<String,SFile>();
 
@@ -71,13 +85,14 @@ public class SClient
 		comm = m_worker.submitRequest(
 								new Communication(
 									Protocol.CM_HANDSHAKE_REQUEST, 
-									new CMHandshakeRequest(m_ipAddr, DEFAULT_PORT)), 
+									new CMHandshakeRequest(m_ipAddr, m_handlerPort)), 
 								m_masterAddr,
 								m_masterPort);
 		
 		if (comm == null)
 		{
 			m_log.warning("NO COMMUNICATION RECEIVED FROM MASTER!");
+			return false;
 		}
 			
 		resp = (CMHandshakeResponse)comm.getPayload();
@@ -93,25 +108,103 @@ public class SClient
 			case DENIED:
 			default:
 				m_log.warning("Request denied");
-                break;
+				return false;
 		}
 		
-		//TODO: Start KA client
-		//TODO: Start thread on _port that listens for failover requests from backup
+		_clientMap.put(m_handlerPort, this);
+		
+		//Start KA client
+		startKA(m_handlerPort);
+		
+		//Start thread on _port that listens for failover requests from backup
+		m_masterHandler = new MasterHandler(m_handlerPort);
+		m_masterThread = new Thread(m_masterHandler);
+		m_masterThread.start();
         
         return true;
     }
 
     public void disconnect()
     {
-		//TODO: Clean up exec pool
-		//TODO: Stop daemon thread
-        //TODO: Unregister from master
+		//Unregister from master
+		Communication resp = m_worker.submitRequest(
+										new Communication(
+											Protocol.CM_FOOTSHAKE_REQUEST,
+											new CMFootshakeRequest(m_id)),
+										m_masterAddr,
+										m_masterPort);
+		
+		//Clean up exec pool
+		m_worker.shutdown();
+		
+		//Stop daemon threads
+		stopKA(m_handlerPort);
+		stopMasterHandler(m_handlerPort);
+		
+		_clientMap.remove(m_handlerPort);
 
         for (String filepath: m_fileMap.keySet())
             m_fileMap.get(filepath).setOpened(false);
         m_fileMap = new HashMap<String,SFile>();
     }
+	
+	public static void startKA(int handlerPort)
+	{
+		SClient cli = _clientMap.get(handlerPort);
+		if (cli == null) return;
+		cli.m_kaClient = new KeepAliveClient(NodeType.CLIENT, cli.m_id, cli.m_masterAddr, cli.m_masterPort, DEFAULT_MASTER_KA_TIMEOUT);
+		cli.m_kaThread = new Thread(cli.m_kaClient);
+		cli.m_kaThread.start();
+	}
+	
+	public static void stopKA(int handlerPort)
+	{
+		SClient cli = _clientMap.get(handlerPort);
+		if (cli == null) return;
+		cli.m_log.info("Attempting to stop the KA Thread");
+		cli.m_kaClient.stop();
+		try {
+			cli.m_kaThread.join();
+		}
+		catch (InterruptedException ex) {
+			//TODO: repeat?
+		}
+		cli.m_log.info("KA Thread stopped");
+	}
+	
+	public static void stopMasterHandler(int handlerPort)
+	{
+		SClient cli = _clientMap.get(handlerPort);
+		if (cli == null) return;
+		cli.m_log.info("Attempting to stop MasterHandler");
+		cli.m_masterHandler.stop();
+		try {
+			cli.m_masterThread.join();
+		}
+		catch (InterruptedException ex) {
+			//TODO: ?
+		}
+		cli.m_log.info("MasterHandler thread stopped");
+	}
+	
+	public static boolean verifyBackup(int handlerPort, Node node)
+	{
+		SClient cli = _clientMap.get(handlerPort);
+		if (node == null || cli == null) return false;
+		return node.getNodeType() == NodeType.CLIENT &&
+			node.getId() == cli.m_id &&
+			node.getAddress().equals(cli.m_ipAddr) &&
+			node.getPort() == cli.m_handlerPort;
+	}
+	
+	public static boolean setMaster(int handlerPort, String address, int port)
+	{
+		SClient cli = _clientMap.get(handlerPort);
+		if (cli == null) return false;
+		cli.m_masterAddr = address;
+		cli.m_masterPort = port;
+		return true;
+	}
 
     public SFile createFile(String filepath)
     {

@@ -1,7 +1,7 @@
 \section{Discussion}
 \label{sec:discussion}
 
-The testing that we have performed on SPOOFS is admittedly minimal, covering mainly the basic test cases.  It is, however, capable of handling multiple Storage and Client nodes that come online dynamically.  It has also proven that the round-robin method for assigning files to Storage nodes works, this will hopefully allow for better load balancing in larger scale systems.  Removing a file and (empty) directory has also shown to work, meaning that all of the filesystem metadata operations are working as specified.  
+The testing that we have performed on SPOOFS is admittedly minimal, covering mainly the basic test cases.  It is, however, capable of handling multiple Storage and Client nodes that come online dynamically.  It has also proven that the round-robin method for assigning files to Storage nodes works, this will hopefully allow for better load balancing in larger scale systems.  Removing a file and (empty) directory has also shown to work, meaning that all of the file system metadata operations are working as specified.  
 
 One of the most important metadata operation that the Client requests from the Master is opening a file handle.  The master is able to successfully traverse its internal directory structure, locate the file, and provide the address of the file back to the Client.  From here, the Client can perform operations, such as reading and writing, directly on the Storage node.  The caching of file handles on the Client also means that the Client does not need to talk to the Master for every operation it performs, using an already opened file handle in its read and write requests.
 

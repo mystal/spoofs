@@ -10,6 +10,8 @@ import cs5204.fs.rpc.MSCommitResponse;
 import cs5204.fs.rpc.MSRecoveryRequest;
 import cs5204.fs.rpc.MSRecoveryResponse;
 import cs5204.fs.rpc.MBBackupRequest;
+import cs5204.fs.rpc.CMRecoveryRequest;
+import cs5204.fs.rpc.CMRecoveryResponse;
 import cs5204.fs.rpc.Payload;
 import cs5204.fs.rpc.Communication;
 import cs5204.fs.common.Protocol;
@@ -611,8 +613,21 @@ public class MasterServer
 	public static void BACKUP_broadcastToClient()
 	{
 		//Go through all clients
+		for (Integer id : _clientMap.keySet())
+		{
+			ClientNode cli = _clientMap.get(id);
+			Communication resp = _worker.submitRequest(
+											new Communication(
+												Protocol.CM_RECOVERY_REQUEST,
+												new CMRecoveryRequest(
+													new Node(id, NodeType.CLIENT, cli.getAddress(), cli.getPort()),
+													_ipAddr,
+													DEFAULT_MAIN_PORT)),
+											cli.getAddress(),
+											cli.getPort());
+			//TODO: handle					
+		}
 		
-		//Broadcast new addr, port
 	}
 	
 	public static void BACKUP_resumeKA()
